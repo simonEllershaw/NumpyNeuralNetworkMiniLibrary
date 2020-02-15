@@ -96,7 +96,7 @@ class SigmoidLayer(Layer):
 
     def sigmoid(self, x):
         x = np.array(x)
-        return np.array((1/ (1 + np.exp(np.negative(np.asarray(x))))))
+        return np.array((1 / (1 + np.exp(np.negative(np.asarray(x))))))
 
     def forward(self, x):
         #######################################################################
@@ -162,7 +162,6 @@ class ReluLayer(Layer):
         # Hadamard product
         return np.array(grad_z * self._cache_current)
 
-
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
@@ -190,7 +189,7 @@ class LinearLayer(Layer):
         self._W = xavier_init(n_in)
 
         # initialise the biases to zero before training
-        self._b = np.zeros(n_in, dtype=float)
+        self._b = np.zeros(self.n_in, dtype=float)
 
         self._cache_current = None
         self._grad_W_current = None
@@ -220,7 +219,8 @@ class LinearLayer(Layer):
         self._cache_current = np.array(x)
 
         # perform forward pass
-        return np.array(np.dot(self._W, x) + self._b)
+        print((self._W * x + self._b).shape)
+        return self._W * x + self._b
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -247,7 +247,7 @@ class LinearLayer(Layer):
         grad_z = np.array(grad_z)
         row = grad_z[0].shape
 
-        #update the weights
+        # update the weights
         self._grad_W_current = np.dot(self._cache_current.T, grad_z)
 
         # update the biases
@@ -255,7 +255,6 @@ class LinearLayer(Layer):
 
         # return gradient of loss for inputs
         return np.dot(grad_z, self._W.T)
-
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -306,7 +305,18 @@ class MultiLayerNetwork(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        self._layers = None
+        # create  layers list
+        layers = []
+
+        # iterate through each layer
+        for layer in range(len(neurons)):
+            # special case - first layer
+            if (layer == 0):
+                layers.append([LinearLayer(input_dim, neurons[layer]), activations[layer]])
+            else:
+                layers.append([LinearLayer(neurons[layer - 1], neurons[layer]), activations[layer]])
+
+        self._layers = layers
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
@@ -325,7 +335,22 @@ class MultiLayerNetwork(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+        # create a results list
+        results = []
+
+        # iterate through the elements of the batch
+        for f in x:
+            # set the forward_result_per_later_per_item to initial f
+            self.forward_result_per_layer_per_item = f
+            # iterate through the layers, updating forward_result_per_later_per_item accordingly
+            print(len(self._layers))
+            for l in self._layers:
+                print("Hwew")
+                output = l[0].forward(self.forward_result_per_layer_per_item)
+                self.forward_result_per_layer_per_item = output
+            results.append(self.forward_result_per_layer_per_item)
+
+        return np.array(results)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -349,7 +374,20 @@ class MultiLayerNetwork(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+        # create a results list
+        results = []
+
+        # iterate through the elements of the gradients
+        for b in grad_z:
+            # set the backward_result_per_later_per_item to initial f
+            self.backward_result_per_layer_per_item = b
+            # iterate through the layers, updating backward_result_per_later_per_item accordingly
+            for l in self._layers:
+                output = l[0].backward(self.backward_result_per_layer_per_item)
+                self.backward_result_per_layer_per_item = output
+            results.append(self.backward_result_per_layer_per_item)
+
+        return np.array(results)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -565,39 +603,41 @@ class Preprocessor(object):
         #######################################################################
 
 
-# def example_main():
-#     input_dim = 4
-#     neurons = [16, 3]
-#     activations = ["relu", "identity"]
-#     net = MultiLayerNetwork(input_dim, neurons, activations)
-#
-#     dat = np.loadtxt("iris.dat")
-#     np.random.shuffle(dat)
-#
-#     x = dat[:, :4]
-#     y = dat[:, 4:]
-#
-#     split_idx = int(0.8 * len(x))
-#
-#     x_train = x[:split_idx]
-#     y_train = y[:split_idx]
-#     x_val = x[split_idx:]
-#     y_val = y[split_idx:]
-#
-#     prep_input = Preprocessor(x_train)
-#
-#     x_train_pre = prep_input.apply(x_train)
-#     x_val_pre = prep_input.apply(x_val)
-#
-#     trainer = Trainer(
-#         network=net,
-#         batch_size=8,
-#         nb_epoch=1000,
-#         learning_rate=0.01,
-#         loss_fun="cross_entropy",
-#         shuffle_flag=True,
-#     )
-#
+def example_main():
+    input_dim = 4
+    neurons = [16, 3]
+    activations = ["relu", "identity"]
+    net = MultiLayerNetwork(input_dim, neurons, activations)
+
+
+    dat = np.loadtxt("iris.dat")
+    np.random.shuffle(dat)
+
+    x = dat[:, :4]
+    y = dat[:, 4:]
+
+    split_idx = int(0.8 * len(x))
+
+    x_train = x[:split_idx]
+    y_train = y[:split_idx]
+    x_val = x[split_idx:]
+    y_val = y[split_idx:]
+
+    net.forward(x_train)
+    # prep_input = Preprocessor(x_train)
+    #
+    # x_train_pre = prep_input.apply(x_train)
+    # x_val_pre = prep_input.apply(x_val)
+    #
+    # trainer = Trainer(
+    #     network=net,
+    #     batch_size=8,
+    #     nb_epoch=1000,
+    #     learning_rate=0.01,
+    #     loss_fun="cross_entropy",
+    #     shuffle_flag=True,
+    # )
+
 #     trainer.train(x_train_pre, y_train)
 #     print("Train loss = ", trainer.eval_loss(x_train_pre, y_train))
 #     print("Validation loss = ", trainer.eval_loss(x_val_pre, y_val))
@@ -609,3 +649,4 @@ class Preprocessor(object):
 
 
 if __name__ == "__main__":
+    example_main()
