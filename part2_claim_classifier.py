@@ -1,10 +1,12 @@
 import numpy as np
 import pickle
+import torch
+import torch.nn as nn
 
 
 class ClaimClassifier():
 
-    def __init__(self,):
+    def __init__(self):
         """
         Feel free to alter this as you wish, adding instance variables as
         necessary. 
@@ -27,9 +29,13 @@ class ClaimClassifier():
         ndarray
             A clean data set that is used for training and prediction.
         """
-        # YOUR CODE HERE
 
-        return  # YOUR CLEAN DATA AS A NUMPY ARRAY
+        attributes = X_raw[1:,:9]
+        labels = X_raw[1:,10:]
+
+        clean_data = np.column_stack((attributes, labels))
+
+        return clean_data
 
     def fit(self, X_raw, y_raw):
         """Classifier training function.
@@ -102,6 +108,7 @@ def load_model():
         trained_model = pickle.load(target)
     return trained_model
 
+
 # ENSURE TO ADD IN WHATEVER INPUTS YOU DEEM NECESSARRY TO THIS FUNCTION
 def ClaimClassifierHyperParameterSearch():
     """Performs a hyper-parameter for fine-tuning the classifier.
@@ -113,3 +120,11 @@ def ClaimClassifierHyperParameterSearch():
     """
 
     return  # Return the chosen hyper parameters
+
+
+if __name__ == "__main__":
+    raw_data = np.genfromtxt("./part2_training_data.csv", delimiter=",")
+    print(raw_data)
+    myClassifier = ClaimClassifier()
+    clean_data = myClassifier._preprocessor(raw_data)
+    print(clean_data)
