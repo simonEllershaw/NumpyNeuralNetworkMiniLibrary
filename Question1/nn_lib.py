@@ -102,6 +102,12 @@ class SigmoidLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
+        x = np.array(x)
+
+        # storing partial derivative of x for backpropagation
+        self._cache_current = self.sigmoid(x) * (1 - self.sigmoid(x))
+
+        # returning forward pass
         return self.sigmoid(x)
 
         #######################################################################
@@ -113,7 +119,8 @@ class SigmoidLayer(Layer):
         #                       ** START OF YOUR CODE **
         #######################################################################
 
-        return self.sigmoid(grad_z) * (1 - self.sigmoid(grad_z))
+        # Hadamard product
+        return np.array(grad_z * self._cache_current)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -129,17 +136,18 @@ class ReluLayer(Layer):
         self._cache_current = None
 
     def reluprime(self, x):
-        x = np.array(x)
-
-        self._cache_current =  np.where(x > 0, 1.0, 0.0)
-
         return np.where(x > 0, 1.0, 0.0)
 
     def forward(self, x):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
+        x = np.array(x)
 
+        # storing partial derivative of x for backpropagation
+        self._cache_current = np.array(self.reluprime(x))
+
+        # returning forward pass
         return np.array(self.reluprime(x) * x)
 
         #######################################################################
@@ -151,7 +159,9 @@ class ReluLayer(Layer):
         #                       ** START OF YOUR CODE **
         #######################################################################
 
-        return np.array(self.reluprime(grad_z))
+        # Hadamard product
+        return np.array(grad_z * self._cache_current)
+
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -207,10 +217,10 @@ class LinearLayer(Layer):
         #                       ** START OF YOUR CODE **
         #######################################################################
         # storing input array for backpropagation
-        self._cache_current = np.asarray(x)
+        self._cache_current = np.array(x)
 
         # perform forward pass
-        return np.array(self._W * x + self._b)
+        return np.array(np.dot(self._W, x) + self._b)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -238,13 +248,13 @@ class LinearLayer(Layer):
         row = grad_z[0].shape
 
         #update the weights
-        self._grad_W_current = self._cache_current.T * grad_z
+        self._grad_W_current = np.dot(self._cache_current.T, grad_z)
 
         # update the biases
-        self._grad_b_current = np.ones(row).T * grad_z
+        self._grad_b_current = np.dot(np.ones(row).T, grad_z)
 
         # return gradient of loss for inputs
-        return np.array(grad_z * self._W.T)
+        return np.dot(grad_z, self._W.T)
 
 
         #######################################################################
@@ -599,10 +609,3 @@ class Preprocessor(object):
 
 
 if __name__ == "__main__":
-
-    test = LinearLayer([1, 1], [2, 3])
-
-    x = [1, 2]
-    print(test.forward(x))
-    print(test.backward(x))
-
