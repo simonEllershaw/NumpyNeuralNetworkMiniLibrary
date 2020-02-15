@@ -186,10 +186,10 @@ class LinearLayer(Layer):
         #                       ** START OF YOUR CODE **
         #######################################################################
         # initialise the weights before training using xavier_init method
-        self._W = xavier_init(n_in)
+        self._W = xavier_init([self.n_out, self.n_in])
 
         # initialise the biases to zero before training
-        self._b = np.zeros(self.n_in, dtype=float)
+        self._b = np.zeros([self.n_out, 1], dtype=float)
 
         self._cache_current = None
         self._grad_W_current = None
@@ -215,12 +215,14 @@ class LinearLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
+        # convert input into an array of appropriate dimensions
+        x = np.asarray(x)
+        x = np.reshape(x, [x.size, 1])
         # storing input array for backpropagation
-        self._cache_current = np.array(x)
+        self._cache_current = x
 
         # perform forward pass
-        print((self._W * x + self._b).shape)
-        return self._W * x + self._b
+        return np.matmul(self._W, x) + self._b
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -244,17 +246,19 @@ class LinearLayer(Layer):
         #                       ** START OF YOUR CODE **
         #######################################################################
 
+        # ensuring grad_z is a numpy array
         grad_z = np.array(grad_z)
-        row = grad_z[0].shape
+        grad_z = np.reshape(grad_z, [grad_z.size, 1])
+        row = grad_z.shape
 
         # update the weights
-        self._grad_W_current = np.dot(self._cache_current.T, grad_z)
+        self._grad_W_current = np.matmul(grad_z, self._cache_current.T)
 
         # update the biases
-        self._grad_b_current = np.dot(np.ones(row).T, grad_z)
+        self._grad_b_current = np.matmul(np.ones(row).T, grad_z)
 
         # return gradient of loss for inputs
-        return np.dot(grad_z, self._W.T)
+        return np.matmul(self._W.T, grad_z)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -343,11 +347,17 @@ class MultiLayerNetwork(object):
             # set the forward_result_per_later_per_item to initial f
             self.forward_result_per_layer_per_item = f
             # iterate through the layers, updating forward_result_per_later_per_item accordingly
-            print(len(self._layers))
             for l in self._layers:
-                print("Hwew")
                 output = l[0].forward(self.forward_result_per_layer_per_item)
+                # apply activation function
+                if l[1] == "relu":
+                    activation = ReluLayer()
+                    output = activation.forward(output)
+                if l[1] == "identity":
+                    activation = SigmoidLayer()
+                    output = activation.forward(output)
                 self.forward_result_per_layer_per_item = output
+
             results.append(self.forward_result_per_layer_per_item)
 
         return np.array(results)
@@ -374,18 +384,36 @@ class MultiLayerNetwork(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
+
+        # first we find outpout - target for each output of layer
+
+        # second: backward for forward propagation result for the activation function
+
+        # third: backward for the forwrd propagation result for the lineary layer
+
+        # ouput per weight the following: first * second * third
+
+        # this wil be used in the update params for each layer
         # create a results list
         results = []
 
+        number_layers = len(self._layers)
+        layer = 0
         # iterate through the elements of the gradients
         for b in grad_z:
             # set the backward_result_per_later_per_item to initial f
             self.backward_result_per_layer_per_item = b
-            # iterate through the layers, updating backward_result_per_later_per_item accordingly
-            for l in self._layers:
-                output = l[0].backward(self.backward_result_per_layer_per_item)
+            # iterate backwards through the layers, updating backward_result_per_later_per_item accordingly
+            for layer_num in range(number_layers):
+                layer = layer_num - (number_layers - 1)
+                output = self._layers[layer][0].backward(self.backward_result_per_layer_per_item)
+                # apply activation function
+                output = self._layers[layer][1]
                 self.backward_result_per_layer_per_item = output
+
             results.append(self.backward_result_per_layer_per_item)
+
+        # apply activation function
 
         return np.array(results)
 
@@ -624,6 +652,7 @@ def example_main():
     y_val = y[split_idx:]
 
     net.forward(x_train)
+    net.backward(y_train)
     # prep_input = Preprocessor(x_train)
     #
     # x_train_pre = prep_input.apply(x_train)
