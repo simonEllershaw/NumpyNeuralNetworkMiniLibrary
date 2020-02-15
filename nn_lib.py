@@ -94,11 +94,15 @@ class SigmoidLayer(Layer):
     def __init__(self):
         self._cache_current = None
 
+    def sigmoid(self, x):
+        x = np.array(x)
+        return np.array((1/ (1 + np.exp(np.negative(np.asarray(x))))))
+
     def forward(self, x):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+        return self.sigmoid(x)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -108,7 +112,8 @@ class SigmoidLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+
+        return self.sigmoid(grad_z) * (1 - self.sigmoid(grad_z))
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -123,11 +128,19 @@ class ReluLayer(Layer):
     def __init__(self):
         self._cache_current = None
 
+    def reluprime(self, x):
+        x = np.array(x)
+
+        self._cache_current =  np.where(x > 0, 1.0, 0.0)
+
+        return np.where(x > 0, 1.0, 0.0)
+
     def forward(self, x):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+
+        return np.array(self.reluprime(x) * x)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -137,7 +150,8 @@ class ReluLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+
+        return np.array(self.reluprime(grad_z))
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -162,8 +176,11 @@ class LinearLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        self._W = None
-        self._b = None
+        # initialise the weights before training using xavier_init method
+        self._W = xavier_init(n_in)
+
+        # initialise the biases to zero before training
+        self._b = np.zeros(n_in, dtype=float)
 
         self._cache_current = None
         self._grad_W_current = None
@@ -189,7 +206,11 @@ class LinearLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+        # storing input array for backpropagation
+        self._cache_current = np.asarray(x)
+
+        # perform forward pass
+        return np.array(self._W * x + self._b)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -212,7 +233,19 @@ class LinearLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+
+        grad_z = np.array(grad_z)
+        row = grad_z[0].shape
+
+        #update the weights
+        self._grad_W_current = self._cache_current.T * grad_z
+
+        # update the biases
+        self._grad_b_current = np.ones(row).T * grad_z
+
+        # return gradient of loss for inputs
+        return np.array(grad_z * self._W.T)
+
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -229,7 +262,11 @@ class LinearLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+        # perform weight's update
+        self._b = self._b_ - self._grad_b_current * learning_rate
+
+        # perform biases' update
+        self._b = self._b - self._grad_b_current * learning_rate
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -349,13 +386,13 @@ class Trainer(object):
     """
 
     def __init__(
-        self,
-        network,
-        batch_size,
-        nb_epoch,
-        learning_rate,
-        loss_fun,
-        shuffle_flag,
+            self,
+            network,
+            batch_size,
+            nb_epoch,
+            learning_rate,
+            loss_fun,
+            shuffle_flag,
     ):
         """Constructor.
 
@@ -518,48 +555,54 @@ class Preprocessor(object):
         #######################################################################
 
 
-def example_main():
-    input_dim = 4
-    neurons = [16, 3]
-    activations = ["relu", "identity"]
-    net = MultiLayerNetwork(input_dim, neurons, activations)
-
-    dat = np.loadtxt("iris.dat")
-    np.random.shuffle(dat)
-
-    x = dat[:, :4]
-    y = dat[:, 4:]
-
-    split_idx = int(0.8 * len(x))
-
-    x_train = x[:split_idx]
-    y_train = y[:split_idx]
-    x_val = x[split_idx:]
-    y_val = y[split_idx:]
-
-    prep_input = Preprocessor(x_train)
-
-    x_train_pre = prep_input.apply(x_train)
-    x_val_pre = prep_input.apply(x_val)
-
-    trainer = Trainer(
-        network=net,
-        batch_size=8,
-        nb_epoch=1000,
-        learning_rate=0.01,
-        loss_fun="cross_entropy",
-        shuffle_flag=True,
-    )
-
-    trainer.train(x_train_pre, y_train)
-    print("Train loss = ", trainer.eval_loss(x_train_pre, y_train))
-    print("Validation loss = ", trainer.eval_loss(x_val_pre, y_val))
-
-    preds = net(x_val_pre).argmax(axis=1).squeeze()
-    targets = y_val.argmax(axis=1).squeeze()
-    accuracy = (preds == targets).mean()
-    print("Validation accuracy: {}".format(accuracy))
+# def example_main():
+#     input_dim = 4
+#     neurons = [16, 3]
+#     activations = ["relu", "identity"]
+#     net = MultiLayerNetwork(input_dim, neurons, activations)
+#
+#     dat = np.loadtxt("iris.dat")
+#     np.random.shuffle(dat)
+#
+#     x = dat[:, :4]
+#     y = dat[:, 4:]
+#
+#     split_idx = int(0.8 * len(x))
+#
+#     x_train = x[:split_idx]
+#     y_train = y[:split_idx]
+#     x_val = x[split_idx:]
+#     y_val = y[split_idx:]
+#
+#     prep_input = Preprocessor(x_train)
+#
+#     x_train_pre = prep_input.apply(x_train)
+#     x_val_pre = prep_input.apply(x_val)
+#
+#     trainer = Trainer(
+#         network=net,
+#         batch_size=8,
+#         nb_epoch=1000,
+#         learning_rate=0.01,
+#         loss_fun="cross_entropy",
+#         shuffle_flag=True,
+#     )
+#
+#     trainer.train(x_train_pre, y_train)
+#     print("Train loss = ", trainer.eval_loss(x_train_pre, y_train))
+#     print("Validation loss = ", trainer.eval_loss(x_val_pre, y_val))
+#
+#     preds = net(x_val_pre).argmax(axis=1).squeeze()
+#     targets = y_val.argmax(axis=1).squeeze()
+#     accuracy = (preds == targets).mean()
+#     print("Validation accuracy: {}".format(accuracy))
 
 
 if __name__ == "__main__":
-    example_main()
+
+    test = LinearLayer([1, 1], [2, 3])
+
+    x = [1, 2]
+    print(test.forward(x))
+    print(test.backward(x))
+
