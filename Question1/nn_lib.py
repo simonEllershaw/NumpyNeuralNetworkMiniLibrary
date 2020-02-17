@@ -363,9 +363,12 @@ class MultiLayerNetwork(object):
                 forward_output = l[0].forward(forward_output)
                 # apply activation function
                 forward_output = l[1].forward(forward_output)
+
             results.append(forward_output)
 
-        return np.array(results)
+
+        results = np.array(results)
+        return np.squeeze(results,2)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -517,7 +520,7 @@ class Trainer(object):
         # shuffle the input_dataset/target_dataset in unison
         p = np.random.permutation(len(target_dataset))
 
-        return input_dataset[p], target_dataset[p]
+        return np.array(input_dataset[p]), np.array(target_dataset[p])
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -546,7 +549,22 @@ class Trainer(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+
+        # iterate through the number of epochs
+        for e in range(self.nb_epoch):
+            # shuffling the data/targets if desired
+            if self.shuffle_flag:
+                input_dataset, target_dataset = self.shuffle(input_dataset, target_dataset)
+            # splitting the data/targets in batches
+            batch_data, batch_target = np.split(input_dataset, self.batch_size), np.split(input_dataset, self.batch_size)
+            # iterate through the batches
+            for batch in range(len(target_dataset)//self.batch_size):
+                output = self.network.forward(batch_data[batch])
+                loss_forward = self._loss_layer.forward(output, batch_target[batch])
+                loss_backward = self._loss_layer.backward()
+                backward_output = self.network.backward(loss_backward)
+                self.network.update_params(self.learning_rate)
+
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -641,7 +659,6 @@ def example_main():
     activations = ["relu", "sigmoid"]
     net = MultiLayerNetwork(input_dim, neurons, activations)
 
-
     dat = np.loadtxt("iris.dat")
     np.random.shuffle(dat)
 
@@ -661,17 +678,18 @@ def example_main():
     #
     # x_train_pre = prep_input.apply(x_train)
     # x_val_pre = prep_input.apply(x_val)
-    #
-    # trainer = Trainer(
-    #     network=net,
-    #     batch_size=8,
-    #     nb_epoch=1000,
-    #     learning_rate=0.01,
-    #     loss_fun="cross_entropy",
-    #     shuffle_flag=True,
-    # )
 
-#     trainer.train(x_train_pre, y_train)
+    trainer = Trainer(
+        network=net,
+        batch_size=8,
+        nb_epoch=1000,
+        learning_rate=0.01,
+        loss_fun="cross_entropy",
+        shuffle_flag=True,
+    )
+
+
+    trainer.train(x_train, y_train)
 #     print("Train loss = ", trainer.eval_loss(x_train_pre, y_train))
 #     print("Validation loss = ", trainer.eval_loss(x_val_pre, y_val))
 #
@@ -682,7 +700,10 @@ def example_main():
 
 
 if __name__ == "__main__":
+    example_main()
 
-    a = [1, 2]
-    b = [[2, 3], [3, 5]]
+
+    ## NOTES FOR SIMON
+
+    # not sure when to use the forward method in the loss classes
 
