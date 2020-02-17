@@ -422,7 +422,9 @@ class MultiLayerNetwork(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+
+        for l in self._layers:
+            l[0].update_params(learning_rate)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -482,7 +484,15 @@ class Trainer(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        self._loss_layer = None
+
+        if self.loss_fun == "mse":
+            self._loss_layer = MSELossLayer()
+
+        elif self.loss_fun == "cross_entropy":
+            self._loss_layer = CrossEntropyLossLayer()
+
+        else:
+            self._loss_layer = None
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
@@ -503,7 +513,11 @@ class Trainer(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+
+        # shuffle the input_dataset/target_dataset in unison
+        p = np.random.permutation(len(target_dataset))
+
+        return input_dataset[p], target_dataset[p]
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -668,4 +682,7 @@ def example_main():
 
 
 if __name__ == "__main__":
-    example_main()
+
+    a = [1, 2]
+    b = [[2, 3], [3, 5]]
+
