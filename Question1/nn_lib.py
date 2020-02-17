@@ -118,9 +118,10 @@ class SigmoidLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-
+        grad_z = np.reshape(np.asarray(grad_z), (len(grad_z), 1))
         # Hadamard product
-        return np.array(grad_z * self._cache_current)
+
+        return np.array(np.multiply(grad_z, self._cache_current))
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -159,8 +160,9 @@ class ReluLayer(Layer):
         #                       ** START OF YOUR CODE **
         #######################################################################
 
+        grad_z = np.reshape(np.asarray(grad_z), (len(grad_z), 1))
         # Hadamard product
-        return np.array(grad_z * self._cache_current)
+        return np.array(np.multiply(grad_z, self._cache_current))
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -315,11 +317,20 @@ class MultiLayerNetwork(object):
         # iterate through each layer
         for layer in range(len(neurons)):
             # special case - first layer
-            if (layer == 0):
-                layers.append([LinearLayer(input_dim, neurons[layer]), activations[layer]])
-            else:
-                layers.append([LinearLayer(neurons[layer - 1], neurons[layer]), activations[layer]])
+            if activations[layer] == "sigmoid":
+                activation = SigmoidLayer()
+                if (layer == 0):
+                    layers.append([LinearLayer(input_dim, neurons[layer]), activation])
+                else:
+                    layers.append([LinearLayer(neurons[layer - 1], neurons[layer]), activation])
+            if activations[layer] == "relu":
+                activation = ReluLayer()
+                if (layer == 0):
+                    layers.append([LinearLayer(input_dim, neurons[layer]), activation])
+                else:
+                    layers.append([LinearLayer(neurons[layer - 1], neurons[layer]), activation])
 
+        # there could be more than these two types of activation functions - e.g. 'identity'?
         self._layers = layers
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -345,20 +356,14 @@ class MultiLayerNetwork(object):
         # iterate through the elements of the batch
         for f in x:
             # set the forward_result_per_later_per_item to initial f
-            self.forward_result_per_layer_per_item = f
+            forward_output = f
             # iterate through the layers, updating forward_result_per_later_per_item accordingly
             for l in self._layers:
-                output = l[0].forward(self.forward_result_per_layer_per_item)
+                # forward propagation
+                forward_output = l[0].forward(forward_output)
                 # apply activation function
-                if l[1] == "relu":
-                    activation = ReluLayer()
-                    output = activation.forward(output)
-                if l[1] == "identity":
-                    activation = SigmoidLayer()
-                    output = activation.forward(output)
-                self.forward_result_per_layer_per_item = output
-
-            results.append(self.forward_result_per_layer_per_item)
+                forward_output = l[1].forward(forward_output)
+            results.append(forward_output)
 
         return np.array(results)
 
@@ -378,42 +383,27 @@ class MultiLayerNetwork(object):
                 #_neurons_in_final_layer).
 
         Returns:
-            {np.ndarray} -- Array containing gradient with repect to layer
+            {np.ndarray} -- Array containing gradient with respect to layer
                 input, of shape (batch_size, input_dim).
         """
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-
-        # first we find outpout - target for each output of layer
-
-        # second: backward for forward propagation result for the activation function
-
-        # third: backward for the forwrd propagation result for the lineary layer
-
-        # ouput per weight the following: first * second * third
-
-        # this wil be used in the update params for each layer
         # create a results list
         results = []
 
         number_layers = len(self._layers)
-        layer = 0
-        # iterate through the elements of the gradients
+
         for b in grad_z:
-            # set the backward_result_per_later_per_item to initial f
-            self.backward_result_per_layer_per_item = b
-            # iterate backwards through the layers, updating backward_result_per_later_per_item accordingly
+            backward_output = b
+            # iterate backwards through the layers, updating accordingly
             for layer_num in range(number_layers):
                 layer = layer_num - (number_layers - 1)
-                output = self._layers[layer][0].backward(self.backward_result_per_layer_per_item)
-                # apply activation function
-                output = self._layers[layer][1]
-                self.backward_result_per_layer_per_item = output
-
-            results.append(self.backward_result_per_layer_per_item)
-
-        # apply activation function
+                # apply backward propagation on the activation functions
+                backward_output = self._layers[layer][1].backward(backward_output)
+                # apply backward propagation for Linear Layers
+                backward_output = self._layers[layer][0].backward(backward_output)
+            results.append(backward_output)
 
         return np.array(results)
 
@@ -634,7 +624,7 @@ class Preprocessor(object):
 def example_main():
     input_dim = 4
     neurons = [16, 3]
-    activations = ["relu", "identity"]
+    activations = ["relu", "sigmoid"]
     net = MultiLayerNetwork(input_dim, neurons, activations)
 
 
