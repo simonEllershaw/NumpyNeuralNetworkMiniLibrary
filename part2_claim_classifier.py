@@ -29,13 +29,23 @@ class ClaimClassifier():
         ndarray
             A clean data set that is used for training and prediction.
         """
+        k=10 # Splits for data
 
-        attributes = X_raw[1:,:9]
-        labels = X_raw[1:,10:]
+        # Calculate mean and standard dev for each column
+        means = np.mean(X_raw, axis=0)
+        std_dev = np.std(X_raw, axis=0)
 
-        clean_data = np.column_stack((attributes, labels))
+        # Apply Normalisation to the data
+        for i in range(len(X_raw)):
+            for j in range(len(X_raw[0])):
+                X_raw[i,j] = X_raw[i,j] - means[j]
+                X_raw[i,j] = X_raw[i,j]/std_dev[j]
 
-        return clean_data
+        # Apply cross validation?
+        """
+        X_raw_splits = np.split(X_raw,k)
+        """
+        return X_raw
 
     def fit(self, X_raw, y_raw):
         """Classifier training function.
@@ -123,8 +133,18 @@ def ClaimClassifierHyperParameterSearch():
 
 
 if __name__ == "__main__":
+    # Open csv file
     raw_data = np.genfromtxt("./part2_training_data.csv", delimiter=",")
-    print(raw_data)
+    attributes = raw_data[1:, :9]
+    labels = raw_data[1:, 10:]
+
+    # Instantiate classifier and pre-process data
     myClassifier = ClaimClassifier()
-    clean_data = myClassifier._preprocessor(raw_data)
-    print(clean_data)
+    X_raw = myClassifier._preprocessor(attributes)
+
+    means = np.mean(X_raw, axis=0)
+    std_dev = np.std(X_raw, axis=0)
+
+    print(means)
+    print(std_dev)
+
