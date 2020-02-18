@@ -1,7 +1,6 @@
 import numpy as np
 import pickle
 
-
 def xavier_init(size, gain=1.0):
     """
     Xavier initialization of network weights.
@@ -9,7 +8,6 @@ def xavier_init(size, gain=1.0):
     low = -gain * np.sqrt(6.0 / np.sum(size))
     high = gain * np.sqrt(6.0 / np.sum(size))
     return np.random.uniform(low=low, high=high, size=size)
-
 
 class Layer:
     """
@@ -85,6 +83,24 @@ class CrossEntropyLossLayer(Layer):
         n_obs = len(y_target)
         return -1 / n_obs * (y_target - probs)
 
+class identityLayer(Layer):
+    """
+    IdentityLayer: Does not apply anything to the Linear layer
+    """
+
+    def __init__(self):
+        self._cache_current = None
+
+    def identity(self, x):
+        return x
+
+    def forward(self, x):
+        return self.identity(x)
+
+    def backward(self, grad_z):
+        return self.identity(grad_z)
+
+
 
 class SigmoidLayer(Layer):
     """
@@ -96,12 +112,13 @@ class SigmoidLayer(Layer):
 
     def sigmoid(self, x):
         x = np.array(x)
-        return np.array((1 / (1 + np.exp(np.negative(np.asarray(x))))))
+        return np.array(1 / (1 + np.exp(np.negative(np.asarray(x)))))
 
     def forward(self, x):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
+        # convertin x to a NumPy array
         x = np.array(x)
 
         # storing partial derivative of x for backpropagation
@@ -118,8 +135,11 @@ class SigmoidLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
+        # converting grad_z to Numpy array
+        grad_z = np.asarray(grad_z)
+
+        # changing shape to fit Hadamard Product
         grad_z = np.reshape(np.asarray(grad_z), (len(grad_z), 1))
-        # Hadamard product
 
         return np.array(np.multiply(grad_z, self._cache_current))
 
@@ -159,9 +179,12 @@ class ReluLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
+        # converting grad_z to Numpy array
+        grad_z = np.asarray(grad_z)
 
+        # changing shape to fit Hadamard Product
         grad_z = np.reshape(np.asarray(grad_z), (len(grad_z), 1))
-        # Hadamard product
+
         return np.array(np.multiply(grad_z, self._cache_current))
 
         #######################################################################
@@ -220,6 +243,7 @@ class LinearLayer(Layer):
         # convert input into an array of appropriate dimensions
         x = np.asarray(x)
         x = np.reshape(x, [x.size, 1])
+
         # storing input array for backpropagation
         self._cache_current = x
 
@@ -254,6 +278,7 @@ class LinearLayer(Layer):
         row = grad_z.shape
 
         # update the weights
+
         self._grad_W_current = np.matmul(grad_z, self._cache_current.T)
 
         # update the biases
@@ -278,7 +303,7 @@ class LinearLayer(Layer):
         #                       ** START OF YOUR CODE **
         #######################################################################
         # perform weight's update
-        self._b = self._b_ - self._grad_b_current * learning_rate
+        self._W = self._W- self._grad_W_current * learning_rate
 
         # perform biases' update
         self._b = self._b - self._grad_b_current * learning_rate
@@ -311,20 +336,28 @@ class MultiLayerNetwork(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        # create  layers list
+        # create  layers list (will store different types and so use list)
         layers = []
 
         # iterate through each layer
         for layer in range(len(neurons)):
-            # special case - first layer
+            if activations[layer] == "identity":
+                activation = identityLayer()
+                # special case - first layer
+                if (layer == 0):
+                    layers.append([LinearLayer(input_dim, neurons[layer]), activation])
+                else:
+                    layers.append([LinearLayer(neurons[layer - 1], neurons[layer]), activation])
             if activations[layer] == "sigmoid":
                 activation = SigmoidLayer()
+                # special case - first layer
                 if (layer == 0):
                     layers.append([LinearLayer(input_dim, neurons[layer]), activation])
                 else:
                     layers.append([LinearLayer(neurons[layer - 1], neurons[layer]), activation])
             if activations[layer] == "relu":
                 activation = ReluLayer()
+                # special case - first layer
                 if (layer == 0):
                     layers.append([LinearLayer(input_dim, neurons[layer]), activation])
                 else:
@@ -365,7 +398,6 @@ class MultiLayerNetwork(object):
                 forward_output = l[1].forward(forward_output)
 
             results.append(forward_output)
-
 
         results = np.array(results)
         return np.squeeze(results,2)
@@ -549,21 +581,24 @@ class Trainer(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
-        # # iterate through the number of epochs
-        # for e in range(self.nb_epoch):
-        #     # shuffling the data/targets if desired
-        #     if self.shuffle_flag:
-        #         input_dataset, target_dataset = self.shuffle(input_dataset, target_dataset)
-        #     # splitting the data/targets in batches
-        #     batch_data, batch_target = np.split(input_dataset, self.batch_size), np.split(input_dataset, self.batch_size)
-        #     # iterate through the batches
-        #     for batch in range(len(target_dataset)//self.batch_size):
-        #         output = self.network.forward(batch_data[batch])
-        #         loss_forward = self._loss_layer.forward(output, batch_target[batch])
-        #         loss_backward = self._loss_layer.backward()
-        #         backward_output = self.network.backward(loss_backward)
-        #         self.network.update_params(self.learning_rate)
+
+        # finding the number of batches
+        nb_batches = len(target_dataset) // self.batch_size
+
+        # iterate through the number of epochs
+        for e in range(self.nb_epoch):
+            # shuffling the data/targets if desired
+            if self.shuffle_flag:
+                input_dataset, target_dataset = self.shuffle(input_dataset, target_dataset)
+            # splitting the data/targets in batches
+            batch_data, batch_target = np.split(input_dataset, nb_batches), np.split(target_dataset, nb_batches)
+            # iterate through the batches
+            for batch in range(nb_batches):
+                output = self.network.forward(batch_data[batch])
+                loss_forward = self._loss_layer.forward(output, batch_target[batch])
+                loss_backward = self._loss_layer.backward()
+                backward_output = self.network.backward(loss_backward)
+                self.network.update_params(self.learning_rate)
 
 
         #######################################################################
@@ -656,7 +691,7 @@ class Preprocessor(object):
 def example_main():
     input_dim = 4
     neurons = [16, 3]
-    activations = ["relu", "sigmoid"]
+    activations = ["relu", "identity"]
     net = MultiLayerNetwork(input_dim, neurons, activations)
 
     dat = np.loadtxt("iris.dat")
