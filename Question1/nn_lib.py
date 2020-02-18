@@ -549,21 +549,21 @@ class Trainer(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-
-        # iterate through the number of epochs
-        for e in range(self.nb_epoch):
-            # shuffling the data/targets if desired
-            if self.shuffle_flag:
-                input_dataset, target_dataset = self.shuffle(input_dataset, target_dataset)
-            # splitting the data/targets in batches
-            batch_data, batch_target = np.split(input_dataset, self.batch_size), np.split(input_dataset, self.batch_size)
-            # iterate through the batches
-            for batch in range(len(target_dataset)//self.batch_size):
-                output = self.network.forward(batch_data[batch])
-                loss_forward = self._loss_layer.forward(output, batch_target[batch])
-                loss_backward = self._loss_layer.backward()
-                backward_output = self.network.backward(loss_backward)
-                self.network.update_params(self.learning_rate)
+        pass
+        # # iterate through the number of epochs
+        # for e in range(self.nb_epoch):
+        #     # shuffling the data/targets if desired
+        #     if self.shuffle_flag:
+        #         input_dataset, target_dataset = self.shuffle(input_dataset, target_dataset)
+        #     # splitting the data/targets in batches
+        #     batch_data, batch_target = np.split(input_dataset, self.batch_size), np.split(input_dataset, self.batch_size)
+        #     # iterate through the batches
+        #     for batch in range(len(target_dataset)//self.batch_size):
+        #         output = self.network.forward(batch_data[batch])
+        #         loss_forward = self._loss_layer.forward(output, batch_target[batch])
+        #         loss_backward = self._loss_layer.backward()
+        #         backward_output = self.network.backward(loss_backward)
+        #         self.network.update_params(self.learning_rate)
 
 
         #######################################################################
