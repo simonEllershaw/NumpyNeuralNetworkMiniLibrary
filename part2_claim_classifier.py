@@ -154,8 +154,9 @@ def ClaimClassifierHyperParameterSearch(training_set, testing_set):
         if metric > max_metric:
             best_lr = lr
             best_momentum = momentum
+            best_loss_function = loss_function
 
-    return best_lr, best_momentum
+    return best_lr, best_momentum, best_loss_function
 
 
 if __name__ == "__main__":
