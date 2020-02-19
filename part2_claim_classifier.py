@@ -2,6 +2,8 @@ import numpy as np
 import pickle
 import torch
 import torch.nn as nn
+import torch.optim as optim
+import random
 
 
 class ClaimClassifier():
@@ -29,7 +31,6 @@ class ClaimClassifier():
         ndarray
             A clean data set that is used for training and prediction.
         """
-        k=10 # Splits for data
 
         # Calculate mean and standard dev for each column
         means = np.mean(X_raw, axis=0)
@@ -38,12 +39,18 @@ class ClaimClassifier():
         # Apply Normalisation to the data
         for i in range(len(X_raw)):
             for j in range(len(X_raw[0])):
-                X_raw[i,j] = X_raw[i,j] - means[j]
-                X_raw[i,j] = X_raw[i,j]/std_dev[j]
+                X_raw[i, j] = X_raw[i, j] - means[j]
+                X_raw[i, j] = X_raw[i, j]/std_dev[j]
 
         # Apply cross validation?
         """
+        k=10 # Splits for data
         X_raw_splits = np.split(X_raw,k)
+        for i in range(8)
+            np.stack(.....)
+         
+        validation_set = X_raw_splits[8]
+        testing_set = X_raw_splits[9]
         """
         return X_raw
 
@@ -120,7 +127,7 @@ def load_model():
 
 
 # ENSURE TO ADD IN WHATEVER INPUTS YOU DEEM NECESSARRY TO THIS FUNCTION
-def ClaimClassifierHyperParameterSearch():
+def ClaimClassifierHyperParameterSearch(training_set, testing_set):
     """Performs a hyper-parameter for fine-tuning the classifier.
 
     Implement a function that performs a hyper-parameter search for your
@@ -128,8 +135,20 @@ def ClaimClassifierHyperParameterSearch():
 
     The function should return your optimised hyper-parameters. 
     """
+    best_lr = 0
+    best_momentum = 0
+    max_metric = 0
 
-    return  # Return the chosen hyper parameters
+    for i in range(60):
+        lr = random.uniform(0, 1)
+        momentum = random.uniform(0.5, 1)
+        optimiser = optim.SGD(lnet.parameters(),lr=lr, momentum=momentum)
+        metric = ...
+        if metric > max_metric:
+            best_lr = lr
+            best_momentum = momentum
+
+    return best_lr, best_momentum
 
 
 if __name__ == "__main__":
@@ -142,9 +161,8 @@ if __name__ == "__main__":
     myClassifier = ClaimClassifier()
     X_raw = myClassifier._preprocessor(attributes)
 
-    means = np.mean(X_raw, axis=0)
-    std_dev = np.std(X_raw, axis=0)
+    labels_summary = np.unique(labels, return_counts=True)
 
-    print(means)
-    print(std_dev)
+    print(labels_summary)
+
 
