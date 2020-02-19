@@ -142,7 +142,14 @@ def ClaimClassifierHyperParameterSearch(training_set, testing_set):
     for i in range(60):
         lr = random.uniform(0, 1)
         momentum = random.uniform(0.5, 1)
+        loss = random.uniform(0, 1)
+        if round(loss) == 1:
+            loss_function = nn.BCELoss()
+        else:
+            loss_function = nn.HingeEmbeddingLoss()
+
         optimiser = optim.SGD(lnet.parameters(),lr=lr, momentum=momentum)
+
         metric = ...
         if metric > max_metric:
             best_lr = lr
