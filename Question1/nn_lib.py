@@ -120,11 +120,10 @@ class ActivationLondon(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
+        activationFunctionDerivatives = self._cache_current
 
-        # Hadamard product, stored in _cache_current is the derivative of the
-        # activation function
-        return np.multiply(grad_z, self._cache_current)
-
+        # Hadamard product used here
+        return np.multiply(grad_z, activationFunctionDerivatives)
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
@@ -215,13 +214,13 @@ class LinearLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        # ensure x is a numpy array
         x = np.asarray(x)
+
         # storing input array for backpropagation
         self._cache_current = x
+
         # perform forward pass
         return np.matmul(x, self._W) + self._b
-
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
@@ -243,9 +242,8 @@ class LinearLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-
-        # ensuring grad_z is a numpy array
         grad_z = np.array(grad_z)
+        x = self._cache_current
 
         # set up column vector of ones matrix transposed
         batch_size = len(grad_z)
@@ -253,7 +251,7 @@ class LinearLayer(Layer):
 
         # calculate gradients of linear parameters
         # Note x values used in forward propogation are stored in _cache_current
-        self._grad_W_current = np.matmul(self._cache_current.T, grad_z)
+        self._grad_W_current = np.matmul(x.T, grad_z)
         self._grad_b_current = np.matmul(ones, grad_z)
 
         # return gradient of loss for inputs
@@ -543,6 +541,8 @@ class Trainer(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
+        self.checkDimensionsOfDataAndNetworkMatch(input_dataset, target_dataset)
+
         # iterate through the number of epochs
         for epoch_num in range(self.nb_epoch):
             # shuffling the data/targets if desired
@@ -567,6 +567,12 @@ class Trainer(object):
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
+
+    def checkDimensionsOfDataAndNetworkMatch(self, input_dataset, target_dataset):
+        if input_dataset.shape[1] != self.network.input_dim:
+            raise ValueError("Number of input dimensions of the network must match dimensions of input_dataset")
+        elif target_dataset.shape[1] != self.network.neurons[-1]:
+            raise ValueError("Number of output dimensions of the network must match dimensions of target_dataset")
 
     def eval_loss(self, input_dataset, target_dataset):
         """
@@ -696,48 +702,5 @@ def example_main():
     accuracy = (preds == targets).mean()
     print("Validation accuracy: {}".format(accuracy))
 
-
-def example_main2():
-    # Load data
-    dat = np.loadtxt("../iris.dat")
-    Preprocessor(dat)
-    split_idx = int(0.8 * len(dat))
-    n_in = 4
-    n_out = 3
-    train_inputs = dat[:, :n_in]
-    train_targets = dat[:, n_in:]
-
-    # create net
-    neurons = [16, n_out]
-    activations = ["relu", "sigmoid"]
-    net = MultiLayerNetwork(n_in, neurons, activations)
-
-    trainer = Trainer(
-        network=net,
-        batch_size=8,
-        nb_epoch=1000,
-        learning_rate=0.01,
-        loss_fun="cross_entropy",
-        shuffle_flag=True,
-    )
-
-    trainer.train(train_inputs[:split_idx], train_targets[:split_idx])
-
-    print("Validation loss = ", trainer.eval_loss(train_inputs[split_idx:], train_targets[split_idx:]))
-
-
-#     print("Train loss = ", trainer.eval_loss(x_train_pre, y_train))
-#     print("Validation loss = ", trainer.eval_loss(x_val_pre, y_val))
-#
-#     preds = net(x_val_pre).argmax(axis=1).squeeze()
-#     targets = y_val.argmax(axis=1).squeeze()
-#     accuracy = (preds == targets).mean()
-#     print("Validation accuracy: {}".format(accuracy))
-
-
 if __name__ == "__main__":
     example_main()
-    # a = np.array([[1,1],[1,1]])
-    # b = np.array([2, 3])
-    # result = a * b
-    # print(result)
