@@ -666,7 +666,7 @@ def example_main():
     activations = ["relu", "identity"]
     net = MultiLayerNetwork(input_dim, neurons, activations)
 
-    dat = np.loadtxt("../iris.dat")
+    dat = np.loadtxt("iris.dat")
     np.random.shuffle(dat)
 
     x = dat[:, :4]
