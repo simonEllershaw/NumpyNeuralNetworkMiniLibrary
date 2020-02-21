@@ -1,10 +1,14 @@
 import numpy as np
 import pickle
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import random
 
 
 class ClaimClassifier():
 
-    def __init__(self,):
+    def __init__(self):
         """
         Feel free to alter this as you wish, adding instance variables as
         necessary. 
@@ -27,9 +31,28 @@ class ClaimClassifier():
         ndarray
             A clean data set that is used for training and prediction.
         """
-        # YOUR CODE HERE
 
-        return  # YOUR CLEAN DATA AS A NUMPY ARRAY
+        # Calculate mean and standard dev for each column
+        means = np.mean(X_raw, axis=0)
+        std_dev = np.std(X_raw, axis=0)
+
+        # Apply Normalisation to the data
+        for i in range(len(X_raw)):
+            for j in range(len(X_raw[0])):
+                X_raw[i, j] = X_raw[i, j] - means[j]
+                X_raw[i, j] = X_raw[i, j]/std_dev[j]
+
+        # Apply cross validation?
+        """
+        k=10 # Splits for data
+        X_raw_splits = np.split(X_raw,k)
+        for i in range(8)
+            np.stack(.....)
+         
+        validation_set = X_raw_splits[8]
+        testing_set = X_raw_splits[9]
+        """
+        return X_raw
 
     def fit(self, X_raw, y_raw):
         """Classifier training function.
@@ -102,8 +125,9 @@ def load_model():
         trained_model = pickle.load(target)
     return trained_model
 
+
 # ENSURE TO ADD IN WHATEVER INPUTS YOU DEEM NECESSARRY TO THIS FUNCTION
-def ClaimClassifierHyperParameterSearch():
+def ClaimClassifierHyperParameterSearch(training_set, testing_set):
     """Performs a hyper-parameter for fine-tuning the classifier.
 
     Implement a function that performs a hyper-parameter search for your
@@ -111,5 +135,42 @@ def ClaimClassifierHyperParameterSearch():
 
     The function should return your optimised hyper-parameters. 
     """
+    best_lr = 0
+    best_momentum = 0
+    max_metric = 0
 
-    return  # Return the chosen hyper parameters
+    for i in range(60):
+        lr = random.uniform(0, 1)
+        momentum = random.uniform(0.5, 1)
+        loss = random.uniform(0, 1)
+        if round(loss) == 1:
+            loss_function = nn.BCELoss()
+        else:
+            loss_function = nn.HingeEmbeddingLoss()
+
+        optimiser = optim.SGD(lnet.parameters(),lr=lr, momentum=momentum)
+
+        metric = ...
+        if metric > max_metric:
+            best_lr = lr
+            best_momentum = momentum
+            best_loss_function = loss_function
+
+    return best_lr, best_momentum, best_loss_function
+
+
+if __name__ == "__main__":
+    # Open csv file
+    raw_data = np.genfromtxt("./part2_training_data.csv", delimiter=",")
+    attributes = raw_data[1:, :9]
+    labels = raw_data[1:, 10:]
+
+    # Instantiate classifier and pre-process data
+    myClassifier = ClaimClassifier()
+    X_raw = myClassifier._preprocessor(attributes)
+
+    labels_summary = np.unique(labels, return_counts=True)
+
+    print(labels_summary)
+
+
