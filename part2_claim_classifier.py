@@ -286,7 +286,13 @@ if __name__ == "__main__":
     #Hyperparameter search
     best_lr, best_momentum, best_loss_function,best_optimizer, best_epochs, best_no_batches=\
         ClaimClassifierHyperParameterSearch(new_train_x,new_train_y,val_x, val_y)
-    print("Best learning rate is " + str(best_lr) +"/n" +"Best moment rate is " + str(best_momentum) +"/n"+"Best loss function is " + str(best_loss_function) +"/n"+"Best optimizer rate is " + str(best_optimizer) +"/n"+"Best epoch number is " + str(best_epochs) +"/n"+"Best batch number is " + str(best_no_batches) +"/n" )
+    print("Best learning rate is: " + str(best_lr))
+    print("Best momentum is " + str(best_momentum))
+    print("Best loss function is " + str(best_loss_function))
+    print("Best optimizer rate is " + str(best_optimizer))
+    print("Best epoch number is " + str(best_epochs))
+    print("Best batch number is " + str(best_no_batches))
+
     #Testing
     net.fit(new_train_x,new_train_y,best_lr,best_loss_function,best_optimizer,best_epochs,best_no_batches)
     #    net.fit(new_train_x, new_train_y)
