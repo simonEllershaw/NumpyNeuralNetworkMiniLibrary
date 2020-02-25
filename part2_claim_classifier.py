@@ -208,7 +208,7 @@ def ClaimClassifierHyperParameterSearch(data_x, data_y,test_x,test_y):
     """
     max_metric=0
     max_loss= 100000
-    for i in range(60):
+    for i in range(100):
         new_net = ClaimClassifier()
         lrn_rate = np.random.uniform(0, 0.1)
         momentum = np.random.uniform(0.5, 1)
@@ -286,15 +286,17 @@ if __name__ == "__main__":
     #Hyperparameter search
     best_lr, best_momentum, best_loss_function,best_optimizer, best_epochs, best_no_batches=\
         ClaimClassifierHyperParameterSearch(new_train_x,new_train_y,val_x, val_y)
-
+    print("Best learning rate is " + str(best_lr) +"/n" +"Best moment rate is " + str(best_momentum) +"/n"+"Best loss function is " + str(best_loss_function) +"/n"+"Best optimizer rate is " + str(best_optimizer) +"/n"+"Best epoch number is " + str(best_epochs) +"/n"+"Best batch number is " + str(best_no_batches) +"/n" )
     #Testing
     net.fit(new_train_x,new_train_y,best_lr,best_loss_function,best_optimizer,best_epochs,best_no_batches)
     #    net.fit(new_train_x, new_train_y)
 
     # 4. evaluate model
     net = net.eval()  # set eval mode
-    acc=net.evaluate_architecture(test_x, test_y)
-    print("Accuracy on test data = %0.2f%%" % acc)
+    # # # # # # # # # # TESTING ON UNSEEN DATA # # # # # # # # # # # # # # # #
+    trained_model= load_model()
+    auc=trained_model.evaluate_architecture(test_x, test_y)
+    print("AUC on test data = %0.2f%%" % auc)
     # 5. save model
 
 
