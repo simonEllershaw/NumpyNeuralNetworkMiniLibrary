@@ -21,6 +21,8 @@ class ClaimClassifier(T.nn.Module):
         super(ClaimClassifier, self).__init__()
         self.hid1 = T.nn.Linear(9, 12)  # 9-(8-8)-1
         self.hid2 = T.nn.Linear(12, 12)
+        self.hid2 = T.nn.Linear(12, 12)
+        self.hid2 = T.nn.Linear(12, 12)
         self.oupt = T.nn.Linear(12, 1)
         """
         Feel free to alter this as you wish, adding instance variables as
@@ -51,6 +53,7 @@ class ClaimClassifier(T.nn.Module):
             A clean data set that is used for training and prediction.
         """
         # YOUR CODE HERE
+        X_raw.to_numpy()
         min_max_scaler = preprocessing.MinMaxScaler()
         X_normed = min_max_scaler.fit_transform(X_raw)
 
@@ -129,13 +132,19 @@ class ClaimClassifier(T.nn.Module):
             values corresponding to the probability of beloning to the
             POSITIVE class (that had accidents)
         """
+        X_clean = self._preprocessor(X_raw)
+        X = T.Tensor(X_clean)
+        oupt = self(X)
+        pred_y = oupt >= 0.5
+        pred_y=pred_y.numpy()
+
 
         # REMEMBER TO HAVE THE FOLLOWING LINE SOMEWHERE IN THE CODE
         # X_clean = self._preprocessor(X_raw)
 
         # YOUR CODE HERE
 
-        return  # YOUR PREDICTED CLASS LABELS
+        return  pred_y # YOUR PREDICTED CLASS LABELS
 
     def evaluate_architecture(self,data_x, data_y):
         """Architecture evaluation utility.
@@ -147,12 +156,12 @@ class ClaimClassifier(T.nn.Module):
         if necessary.
         """
         # data_x and data_y are numpy array-of-arrays matrices
-        X = T.Tensor(data_x)
 
-        Y = T.ByteTensor(data_y)  # a Tensor of 0s and 1s
-        oupt = self(X)  # a Tensor of floats
-        pred_y = oupt >= 0.5  # a Tensor of 0s and 1s
-        num_correct = T.sum(Y == pred_y)  # a Tensor
+        data_x=pd.DataFrame(data=data_x)
+        pred_y = self.predict(data_x)
+        Y = T.ByteTensor(data_y)
+        pred_y = T.from_numpy(pred_y)
+        num_correct = T.sum(Y == pred_y)
         acc = (num_correct.item() * 100.0 / len(data_y))  # scalar
         print('Accuracy: %f' % acc)
         con_matrix = confusion_matrix(data_y, pred_y)
@@ -224,15 +233,12 @@ def ClaimClassifierHyperParameterSearch(data_x, data_y,test_x,test_y):
             max_no_batches = no_batches
             new_net.save_model(new_net)
 
-
-
-
     return best_lr, best_momentum, best_loss_function, optimizer, max_epochs, max_no_batches
 
 
 
 if __name__ == "__main__":
-    os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
+    #    os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
     # 0. get started
     #  T.manual_seed(1)
     #np.random.seed(1)
@@ -241,8 +247,12 @@ if __name__ == "__main__":
     # LOAD FULL FILE
     file = np.loadtxt("part2_training_data.csv", delimiter=',', skiprows=1, dtype=np.float32, ndmin=2)
     np.random.shuffle(file)
+
+
     x_data = file[:, :9]
+    x_data = pd.DataFrame(data= x_data)
     net=ClaimClassifier()
+
     x_data=net._preprocessor(x_data)
 
     #Splitting data into 70% training, 15% validation, 15% test
