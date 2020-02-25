@@ -78,20 +78,8 @@ class ClaimClassifier(T.nn.Module):
             an instance of the fitted model
         """
         self.train()  # set training mode
-        """
-        lrn_rate = 0.001
-        loss = T.nn.BCELoss()  # softmax() + binary CE
-        #     loss_func=T.nn.HingeEmbeddingLoss()
-        # loss = T.nn.MSELoss()
-        # Alternative optimizwer method
-        # optimizer=T.optim.Adam(net.parameters(),lr=lrn_rate)
-        # microsoft optimiser method
-        # SGD= stochastic gradient descent
-        optimizer = T.optim.SGD(net.parameters(), lr=lrn_rate)
-        max_epochs = 3
-        n_items = len(new_train_x)
-        n_batches = 10
-        """
+        
+
         total_batches = round(len(new_train_x) / n_batches)
 
 
@@ -238,10 +226,7 @@ def ClaimClassifierHyperParameterSearch(data_x, data_y,test_x,test_y):
 
 
 if __name__ == "__main__":
-    #    os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
-    # 0. get started
-    #  T.manual_seed(1)
-    #np.random.seed(1)
+   
     # 1. load data
 
     # LOAD FULL FILE
