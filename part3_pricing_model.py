@@ -228,7 +228,7 @@ if __name__ == "__main__":
     new_train_y = total_train[:, -1]
     new_train_x = total_train[:, :-1]
     (unique, counts) = np.unique(new_train_y, return_counts=True)
-    """
+
     # New classifier Parameters
     varaibles = len(new_train_x[0])
     multiplier = 4
@@ -258,15 +258,16 @@ if __name__ == "__main__":
 
     # Set classifier for Model
     MyPricing_Model.base_classifier = best_net
-    print("Saving...")
-    MyPricing_Model.save_model()
-    """
+
 
     # If not calculating from beginning
-    MyPricing_Model = load_model()
+    #MyPricing_Model = load_model()
     ####################
 
     probs = MyPricing_Model.predict_claim_probability(test_x)
     MyPricing_Model.fit(attributes, y, claim_amounts)
     prices = MyPricing_Model.predict_premium(attributes)
     print(prices)
+
+    print("Saving...")
+    MyPricing_Model.save_model()
