@@ -17,13 +17,13 @@ import pandas as pd
 
 class ClaimClassifier(T.nn.Module):
 
-    def __init__(self):
+    def __init__(self, variables = 9):
         super(ClaimClassifier, self).__init__()
-        self.hid1 = T.nn.Linear(9, 12)  # 9-(8-8)-1
-        self.hid2 = T.nn.Linear(12, 12)
-        self.hid2 = T.nn.Linear(12, 12)
-        self.hid2 = T.nn.Linear(12, 12)
-        self.oupt = T.nn.Linear(12, 1)
+        self.hid1 = T.nn.Linear(variables, 2*variables)  # 9-(8-8)-1
+        self.hid2 = T.nn.Linear(2*variables, 2*variables)
+        self.hid2 = T.nn.Linear(2*variables, 2*variables)
+        self.hid2 = T.nn.Linear(2*variables, variables)
+        self.oupt = T.nn.Linear(variables, 1)
         """
         Feel free to alter this as you wish, adding instance variables as
         necessary. 
@@ -205,8 +205,8 @@ def ClaimClassifierHyperParameterSearch(data_x, data_y,test_x,test_y):
             loss = T.nn.BCELoss()
         else:
             loss = T.nn.HingeEmbeddingLoss()
-        no_batches = round(np.random.uniform(10, 100))
-        epochs = round(np.random.uniform(10, 100))
+        no_batches = len(data_x)
+        epochs = round(np.random.uniform(100, 200))
 
         optimizer = T.optim.SGD(new_net.parameters(), lr=lrn_rate, momentum=momentum)
         new_net.fit(data_x, data_y,lrn_rate,loss,optimizer,epochs,no_batches)
@@ -236,9 +236,9 @@ if __name__ == "__main__":
 
     x_data = file[:, :9]
     x_data = pd.DataFrame(data= x_data)
-    net=ClaimClassifier()
+    net = ClaimClassifier()
 
-    x_data=net._preprocessor(x_data)
+    x_data = net._preprocessor(x_data)
 
     #Splitting data into 70% training, 15% validation, 15% test
     train_ratio=round(len(x_data)*0.7)
@@ -268,7 +268,7 @@ if __name__ == "__main__":
     new_train_x = z[:, :9]
     new_train_y = z[:, 9:]
 
-    #Hyperparameter search
+    # Hyperparameter search
     best_lr, best_momentum, best_loss_function,best_optimizer, best_epochs, best_no_batches=\
         ClaimClassifierHyperParameterSearch(new_train_x,new_train_y,val_x, val_y)
     print("Best learning rate is: " + str(best_lr))
@@ -278,7 +278,7 @@ if __name__ == "__main__":
     print("Best epoch number is " + str(best_epochs))
     print("Best batch number is " + str(best_no_batches))
 
-    #Testing
+    # Testing
     net.fit(new_train_x,new_train_y,best_lr,best_loss_function,best_optimizer,best_epochs,best_no_batches)
     #    net.fit(new_train_x, new_train_y)
 

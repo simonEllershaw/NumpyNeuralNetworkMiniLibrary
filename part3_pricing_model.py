@@ -1,5 +1,4 @@
 from sklearn.calibration import CalibratedClassifierCV
-from sklearn.model_selection import train_test_split
 import pickle
 import numpy as np
 import pandas as pd
@@ -10,7 +9,7 @@ import torch.nn as nn
 from part2_claim_classifier import ClaimClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
-from sklearn.utils import resample
+
 
 def fit_and_calibrate_classifier(classifier, X, y):
     # DO NOT ALTER THIS FUNCTION
@@ -72,7 +71,14 @@ class PricingModel():
 
         # Load simple data set used in part 2
         part2_headers = {"drv_age1", 'vh_age', 'vh_cyl', 'vh_din', 'pol_bonus', 'vh_sale_begin', 'vh_sale_end',
-                         'vh_value', 'vh_speed'}
+                         'vh_value', 'vh_speed','drv_age_lic1','pol_duration','pol_sit_duration','drv_age2'}
+        # added from before
+        # 'drv_age_lic1'
+        #  pol_duration
+        #  pol_sit_duration
+
+
+
         required_attributes = X_raw[part2_headers]
 
         # Use min/max normalisation
@@ -217,13 +223,13 @@ if __name__ == "__main__":
     # Shuffle data and split
     X, Y = shuffle(x_clean, labels)
     train_x, test_x, train_y, test_y = train_test_split(X, Y)
-
+    """"
     # Load part 2 and test classifier
     p2_class = ClaimClassifier()
     p2_class = part2.load_model()
     p2_class.eval()
     p2_class.evaluate_architecture(test_x,test_y)
-
+    """
     # Up sample
     (unique, counts) = np.unique(train_y, return_counts=True)
     total_train = np.append(train_x,train_y, axis=1)
@@ -243,13 +249,14 @@ if __name__ == "__main__":
 
 
     # New classifier
-    new_classifier = ClaimClassifier()
+    varaibles = len(new_train_x[0])
+    new_classifier = ClaimClassifier(varaibles)
     new_classifier.train()
 
 
     # New classifier Parameters
     learning = 0.05
-    momentum = 0.9
+    momentum = 0.6
     epochs = 200
     batch_size = len(new_train_x)
     criterion = nn.BCELoss()
@@ -258,7 +265,6 @@ if __name__ == "__main__":
 
     # Fit new classifier
     new_classifier.fit(new_train_x,new_train_y,learning,criterion,optimiser,epochs,batch_size)
-
 
     # Evaluate new classifier
     new_classifier.eval()
