@@ -191,9 +191,9 @@ def ClaimClassifierHyperParameterSearch(data_x, data_y, test_x, test_y, variable
     """
     max_metric = 0
 
-    for i in range(1):
+    for i in range(30):
         multiplier = round(np.random.uniform(1, 15))
-        new_net = ClaimClassifier(variables=variables,multiplier=multiplier)
+        new_net = ClaimClassifier(variables=variables, multiplier=multiplier)
         lrn_rate = np.random.uniform(0.0001, 0.15)
 
         loss = T.nn.BCELoss()

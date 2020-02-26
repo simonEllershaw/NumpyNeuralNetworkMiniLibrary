@@ -234,7 +234,7 @@ if __name__ == "__main__":
     new_train_x = total_train[:, :-1]
     (unique, counts) = np.unique(new_train_y, return_counts=True)
 
-    """
+
     # New classifier Parameters
     varaibles = len(new_train_x[0])
     multiplier = 4
@@ -265,9 +265,8 @@ if __name__ == "__main__":
     # Set classifier for Model
     MyPricing_Model.base_classifier = best_net
     
-    print("Saving...")
-    MyPricing_Model.save_model()
-    """
+
+
 
     # If not calculating from beginning
     MyPricing_Model = load_model()
@@ -279,3 +278,5 @@ if __name__ == "__main__":
     print(prices)
     print(prices.shape)
 
+    print("Saving...")
+    MyPricing_Model.save_model()
