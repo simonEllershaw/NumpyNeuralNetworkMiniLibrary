@@ -76,15 +76,13 @@ class PricingModel():
         # 'drv_age_lic1'
         #  pol_duration
         #  pol_sit_duration
-
-
+        #  drv_age2
 
         required_attributes = X_raw[part2_headers]
 
         # Use min/max normalisation
         min_max_scaler = preprocessing.MinMaxScaler()
         x_normed = min_max_scaler.fit_transform(required_attributes)
-
 
         return x_normed
 
@@ -122,7 +120,7 @@ class PricingModel():
             self.base_classifier = self.base_classifier.fit(X_clean, y_raw)
         return self.base_classifier
 
-    def predict_claim_probability(self, X_raw, classifier):
+    def predict_claim_probability(self, X_raw, classifier =None):
         """Classifier probability prediction function.
 
         Here you will implement the predict function for your classifier.
@@ -142,8 +140,10 @@ class PricingModel():
         # =============================================================
         # REMEMBER TO A SIMILAR LINE TO THE FOLLOWING SOMEWHERE IN THE CODE
         # X_clean = self._preprocessor(X_raw)
+        X_raw = pd.DataFrame(X_raw)
+        labels, probabilities = self.base_classifier.predict(X_raw)
 
-        return  # return probabilities for the positive class (label 1)
+        return probabilities
 
     def predict_premium(self, X_raw):
         """Predicts premiums based on the pricing model.
@@ -205,6 +205,7 @@ def average_claim(claim_amounts):
 
 
 if __name__ == "__main__":
+
     dat = pd.read_csv("part3_training_data.csv")
     attributes = dat.drop(columns=["claim_amount", "made_claim"])
     y = dat["made_claim"]
@@ -212,24 +213,19 @@ if __name__ == "__main__":
 
     # Clean data
 
-    classifier = PricingModel()
-    x_clean = classifier._preprocessor(attributes)
+    MyPricing_Model = PricingModel()
+    x_clean = MyPricing_Model._preprocessor(attributes)
 
     # Join data
     y = list(y)
     labels = np.reshape(y, (len(y), 1))
-    total = np.append(x_clean,labels, axis=1)
+    total = np.append(x_clean, labels, axis=1)
 
     # Shuffle data and split
     X, Y = shuffle(x_clean, labels)
-    train_x, test_x, train_y, test_y = train_test_split(X, Y)
-    """"
-    # Load part 2 and test classifier
-    p2_class = ClaimClassifier()
-    p2_class = part2.load_model()
-    p2_class.eval()
-    p2_class.evaluate_architecture(test_x,test_y)
-    """
+    train_x, test_x, train_y, test_y = train_test_split(X, Y, test_size=0.3)
+    valid_x, test_x, valid_y, test_y = train_test_split(train_x, train_y, test_size=0.5)
+
     # Up sample
     (unique, counts) = np.unique(train_y, return_counts=True)
     total_train = np.append(train_x,train_y, axis=1)
@@ -246,7 +242,7 @@ if __name__ == "__main__":
     new_train_y = total_train[:, -1]
     new_train_x = total_train[:, :-1]
     (unique, counts) = np.unique(new_train_y, return_counts=True)
-
+    """
     # New classifier Parameters
     varaibles = len(new_train_x[0])
     multiplier = 4
@@ -260,8 +256,29 @@ if __name__ == "__main__":
 
 
     # Fit new classifier
-    new_classifier.fit(new_train_x,new_train_y,learning,criterion,optimiser,epochs,batch_size)
+    new_classifier.fit(new_train_x, new_train_y, learning,criterion,optimiser,epochs,batch_size)
+
+    best_lr, best_epochs, multiplier, best_net = \
+        part2.ClaimClassifierHyperParameterSearch(new_train_x, new_train_y, valid_x, valid_y, varaibles,pricing=True)
 
     # Evaluate new classifier
     new_classifier.eval()
     new_classifier.evaluate_architecture(test_x, test_y)
+    
+    # Evaluate best net
+    
+    best_net.eval()
+    best_net.evaluate_architecture(test_x, test_y)
+
+    # Set classifier for Model
+    MyPricing_Model.base_classifier = best_net
+    print("Saving...")
+    MyPricing_Model.save_model()
+    """
+
+    # If not calculating from beginning
+    MyPricing_Model = load_model()
+    ####################
+
+    probs = MyPricing_Model.predict_claim_probability(test_x)
+    print(probs)

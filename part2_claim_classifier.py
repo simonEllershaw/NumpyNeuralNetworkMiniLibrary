@@ -122,13 +122,14 @@ class ClaimClassifier(T.nn.Module):
         oupt = self(X)
         pred_y = oupt >= 0.5
         pred_y = pred_y.numpy()
+        prob_y=oupt.detach().numpy()
 
         # REMEMBER TO HAVE THE FOLLOWING LINE SOMEWHERE IN THE CODE
         # X_clean = self._preprocessor(X_raw)
 
         # YOUR CODE HERE
 
-        return pred_y  # YOUR PREDICTED CLASS LABELS
+        return pred_y, prob_y  # YOUR PREDICTED CLASS LABELS
 
     def evaluate_architecture(self, data_x, data_y):
         """Architecture evaluation utility.
@@ -142,7 +143,7 @@ class ClaimClassifier(T.nn.Module):
         # data_x and data_y are numpy array-of-arrays matrices
 
         data_x = pd.DataFrame(data=data_x)
-        pred_y = self.predict(data_x)
+        pred_y, prob_y = self.predict(data_x)
         Y = T.ByteTensor(data_y)
         pred_y = T.from_numpy(pred_y)
         num_correct = T.sum(Y == pred_y)
@@ -162,9 +163,9 @@ class ClaimClassifier(T.nn.Module):
         accuracy = accuracy_score(data_y, pred_y)
         print('Accuracy: %f' % accuracy)
         print(con_matrix)
-        roc = roc_auc_score(data_y, pred_y)
+        roc = roc_auc_score(data_y, prob_y)
         print('ROC: %f' % roc)
-        return (roc)
+        return roc
 
     def save_model(self, model):
         # Please alter this file appropriately to work in tandem with your load_model function below
@@ -180,7 +181,7 @@ def load_model():
 
 
 # ENSURE TO ADD IN WHATEVER INPUTS YOU DEEM NECESSARRY TO THIS FUNCTION
-def ClaimClassifierHyperParameterSearch(data_x, data_y, test_x, test_y):
+def ClaimClassifierHyperParameterSearch(data_x, data_y, test_x, test_y, variables =9, pricing = False):
     """Performs a hyper-parameter for fine-tuning the classifier.
 
     Implement a function that performs a hyper-parameter search for your
@@ -189,37 +190,33 @@ def ClaimClassifierHyperParameterSearch(data_x, data_y, test_x, test_y):
     The function should return your optimised hyper-parameters.
     """
     max_metric = 0
-    max_loss = 100000
-    for i in range(100):
+
+    for i in range(10):
         multiplier = round(np.random.uniform(1, 15))
-        new_net = ClaimClassifier(multiplier=multiplier)
+        new_net = ClaimClassifier(variables=variables,multiplier=multiplier)
         lrn_rate = np.random.uniform(0.0001, 0.15)
-        momentum = np.random.uniform(0.5, 1)
-        loss_no = np.random.uniform(0, 1)
-        if 1 == 1:
-            loss = T.nn.BCELoss()
-        else:
-            loss = T.nn.HingeEmbeddingLoss()
+
+        loss = T.nn.BCELoss()
         no_batches = len(data_x)
         epochs = round(np.random.uniform(100, 200))
         new_net.train()
-        optimizer = T.optim.Adam(new_net.parameters(), lr=lrn_rate)  # , momentum=momentum)
+        optimizer = T.optim.Adam(new_net.parameters(), lr=lrn_rate)
         new_net.fit(data_x, data_y, lrn_rate, loss, optimizer, epochs, no_batches)
 
-        new_net.eval()+
+        new_net.eval()
+
         metric = new_net.evaluate_architecture(test_x, test_y)
 
         if metric > max_metric:
-            best_lr = lrn_rate
-            best_momentum = momentum
             max_metric = metric
+            best_lr = lrn_rate
             max_epochs = epochs
-            max_no_batches = no_batches
             best_multiplier = multiplier
-            new_net.save_model(new_net)
-            best_loss_function = loss
+            best_net = new_net
+            if not pricing:
+                new_net.save_model(new_net)
 
-    return best_lr, best_momentum, best_loss_function, optimizer, max_epochs, max_no_batches, best_multiplier
+    return best_lr, max_epochs, best_multiplier, best_net
 
 
 if __name__ == "__main__":
@@ -265,17 +262,12 @@ if __name__ == "__main__":
     new_train_y = z[:, 9:]
 
     # Hyperparameter search
-    best_lr, best_momentum, best_loss_function, best_optimizer, best_epochs, best_no_batches, multiplier = \
+    best_lr, best_epochs, multiplier, best_net = \
         ClaimClassifierHyperParameterSearch(new_train_x, new_train_y, val_x, val_y)
 
     print("Best learning rate is: " + str(best_lr))
     print("Best multiplier is " + str(multiplier))
     print("Best epoch number is " + str(best_epochs))
-
-    print("Not used:")
-    print("Best momentum is " + str(best_momentum))
-    print("Best optimizer rate is " + str(best_optimizer))
-    print("Best loss function is " + str(best_loss_function))
 
     # Testing
     #net.fit(new_train_x, new_train_y, best_lr, best_loss_function, best_optimizer, best_epochs, best_no_batches)
@@ -283,9 +275,14 @@ if __name__ == "__main__":
 
     # 4. evaluate model
     net = net.eval()  # set eval mode
+
     # # # # # # # # # # TESTING ON UNSEEN DATA # # # # # # # # # # # # # # # #
     trained_model = load_model()
     trained_model.eval()
     auc = trained_model.evaluate_architecture(test_x, test_y)
+    print("AUC on test data = %0.2f%%" % auc)
+
+    best_net.eval()
+    auc = best_net.evaluate_architecture(test_x, test_y)
     print("AUC on test data = %0.2f%%" % auc)
     # 5. save model
