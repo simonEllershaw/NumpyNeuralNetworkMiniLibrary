@@ -247,17 +247,13 @@ if __name__ == "__main__":
     new_train_x = total_train[:, :-1]
     (unique, counts) = np.unique(new_train_y, return_counts=True)
 
-
-    # New classifier
-    varaibles = len(new_train_x[0])
-    new_classifier = ClaimClassifier(varaibles)
-    new_classifier.train()
-
-
     # New classifier Parameters
-    learning = 0.05
-    momentum = 0.6
-    epochs = 200
+    varaibles = len(new_train_x[0])
+    multiplier = 4
+    new_classifier = ClaimClassifier(variables=varaibles, multiplier=multiplier)
+    new_classifier.train()
+    learning = 0.002
+    epochs = 124
     batch_size = len(new_train_x)
     criterion = nn.BCELoss()
     optimiser = torch.optim.Adam(new_classifier.parameters(), lr=learning)

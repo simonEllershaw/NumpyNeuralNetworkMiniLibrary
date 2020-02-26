@@ -17,12 +17,11 @@ import pandas as pd
 
 class ClaimClassifier(T.nn.Module):
 
-    def __init__(self, variables = 9):
+    def __init__(self, variables=9, multiplier =14):
         super(ClaimClassifier, self).__init__()
-        self.hid1 = T.nn.Linear(variables, 2*variables)  # 9-(8-8)-1
-        self.hid2 = T.nn.Linear(2*variables, 2*variables)
-        self.hid2 = T.nn.Linear(2*variables, 2*variables)
-        self.hid2 = T.nn.Linear(2*variables, variables)
+        self.hid1 = T.nn.Linear(variables, multiplier * variables)  # 9-(8-8)-1
+        self.hid2 = T.nn.Linear(multiplier * variables, variables)
+        # self.hid3 =
         self.oupt = T.nn.Linear(variables, 1)
         """
         Feel free to alter this as you wish, adding instance variables as
@@ -57,10 +56,9 @@ class ClaimClassifier(T.nn.Module):
         min_max_scaler = preprocessing.MinMaxScaler()
         X_normed = min_max_scaler.fit_transform(X_raw)
 
-        return X_normed # YOUR CLEAN DATA AS A NUMPY ARRAY
+        return X_normed  # YOUR CLEAN DATA AS A NUMPY ARRAY
 
-
-    def fit(self, new_train_x, new_train_y,lrn_rate,loss,optimizer,max_epochs,n_batches):
+    def fit(self, new_train_x, new_train_y, lrn_rate, loss, optimizer, max_epochs, n_batches):
         """Classifier training function.
 
         Here you will implement the training function for your classifier.
@@ -78,17 +76,16 @@ class ClaimClassifier(T.nn.Module):
             an instance of the fitted model
         """
         self.train()  # set training mode
-        
 
         total_batches = round(len(new_train_x) / n_batches)
-
 
         for epoch in range(max_epochs):
             for i in range(total_batches):
                 #   for data in batcher:
                 #
                 local_X, local_y = new_train_x[i * n_batches:(i + 1) * n_batches, ], new_train_y[
-                                                                                     i * n_batches:(i + 1) * n_batches, ]
+                                                                                     i * n_batches:(
+                                                                                                               i + 1) * n_batches, ]
                 # RANDOMLY SHUFFLE AND THEN SPLIT
                 X = T.Tensor(local_X)
                 Y = T.Tensor(local_y)
@@ -124,17 +121,16 @@ class ClaimClassifier(T.nn.Module):
         X = T.Tensor(X_clean)
         oupt = self(X)
         pred_y = oupt >= 0.5
-        pred_y=pred_y.numpy()
-
+        pred_y = pred_y.numpy()
 
         # REMEMBER TO HAVE THE FOLLOWING LINE SOMEWHERE IN THE CODE
         # X_clean = self._preprocessor(X_raw)
 
         # YOUR CODE HERE
 
-        return  pred_y # YOUR PREDICTED CLASS LABELS
+        return pred_y  # YOUR PREDICTED CLASS LABELS
 
-    def evaluate_architecture(self,data_x, data_y):
+    def evaluate_architecture(self, data_x, data_y):
         """Architecture evaluation utility.
 
         Populate this function with evaluation utilities for your
@@ -145,7 +141,7 @@ class ClaimClassifier(T.nn.Module):
         """
         # data_x and data_y are numpy array-of-arrays matrices
 
-        data_x=pd.DataFrame(data=data_x)
+        data_x = pd.DataFrame(data=data_x)
         pred_y = self.predict(data_x)
         Y = T.ByteTensor(data_y)
         pred_y = T.from_numpy(pred_y)
@@ -170,9 +166,7 @@ class ClaimClassifier(T.nn.Module):
         print('ROC: %f' % roc)
         return (roc)
 
-
-
-    def save_model(self,model):
+    def save_model(self, model):
         # Please alter this file appropriately to work in tandem with your load_model function below
         with open('part2_claim_classifier.pickle', 'wb') as target:
             pickle.dump(model, target)
@@ -186,7 +180,7 @@ def load_model():
 
 
 # ENSURE TO ADD IN WHATEVER INPUTS YOU DEEM NECESSARRY TO THIS FUNCTION
-def ClaimClassifierHyperParameterSearch(data_x, data_y,test_x,test_y):
+def ClaimClassifierHyperParameterSearch(data_x, data_y, test_x, test_y):
     """Performs a hyper-parameter for fine-tuning the classifier.
 
     Implement a function that performs a hyper-parameter search for your
@@ -194,57 +188,59 @@ def ClaimClassifierHyperParameterSearch(data_x, data_y,test_x,test_y):
 
     The function should return your optimised hyper-parameters.
     """
-    max_metric=0
-    max_loss= 100000
+    max_metric = 0
+    max_loss = 100000
     for i in range(100):
-        new_net = ClaimClassifier()
-        lrn_rate = np.random.uniform(0, 0.1)
+        multiplier = round(np.random.uniform(1, 15))
+        new_net = ClaimClassifier(multiplier=multiplier)
+        lrn_rate = np.random.uniform(0.0001, 0.15)
         momentum = np.random.uniform(0.5, 1)
         loss_no = np.random.uniform(0, 1)
-        if round(loss_no) == 1:
+        if 1 == 1:
             loss = T.nn.BCELoss()
         else:
             loss = T.nn.HingeEmbeddingLoss()
         no_batches = len(data_x)
         epochs = round(np.random.uniform(100, 200))
+        new_net.train()
+        optimizer = T.optim.Adam(new_net.parameters(), lr=lrn_rate)  # , momentum=momentum)
+        new_net.fit(data_x, data_y, lrn_rate, loss, optimizer, epochs, no_batches)
 
-        optimizer = T.optim.SGD(new_net.parameters(), lr=lrn_rate, momentum=momentum)
-        new_net.fit(data_x, data_y,lrn_rate,loss,optimizer,epochs,no_batches)
+        new_net.eval()+
         metric = new_net.evaluate_architecture(test_x, test_y)
 
         if metric > max_metric:
             best_lr = lrn_rate
             best_momentum = momentum
-            best_loss_function = loss
             max_metric = metric
             max_epochs = epochs
             max_no_batches = no_batches
+            best_multiplier = multiplier
             new_net.save_model(new_net)
+            best_loss_function = loss
 
-    return best_lr, best_momentum, best_loss_function, optimizer, max_epochs, max_no_batches
-
+    return best_lr, best_momentum, best_loss_function, optimizer, max_epochs, max_no_batches, best_multiplier
 
 
 if __name__ == "__main__":
-   
+
     # 1. load data
 
     # LOAD FULL FILE
     file = np.loadtxt("part2_training_data.csv", delimiter=',', skiprows=1, dtype=np.float32, ndmin=2)
     np.random.shuffle(file)
 
-
     x_data = file[:, :9]
-    x_data = pd.DataFrame(data= x_data)
+    x_data = pd.DataFrame(data=x_data)
     net = ClaimClassifier()
 
     x_data = net._preprocessor(x_data)
 
-    #Splitting data into 70% training, 15% validation, 15% test
-    train_ratio=round(len(x_data)*0.7)
-    train_x, test_x = x_data[:train_ratio,:], x_data[train_ratio:,:]
+    # Splitting data into 70% training, 15% validation, 15% test
+    train_ratio = round(len(x_data) * 0.7)
+    train_x, test_x = x_data[:train_ratio, :], x_data[train_ratio:, :]
     train_y, test_y = file[:train_ratio, 10:], file[train_ratio:, 10:]
-    test_ratio=round(len(test_x)*0.5)
+    test_ratio = round(len(test_x) * 0.5)
     test_x, val_x = test_x[:test_ratio, :], test_x[test_ratio:, :]
     test_y, val_y = test_y[:test_ratio, :], test_y[test_ratio:, :]
 
@@ -269,29 +265,27 @@ if __name__ == "__main__":
     new_train_y = z[:, 9:]
 
     # Hyperparameter search
-    best_lr, best_momentum, best_loss_function,best_optimizer, best_epochs, best_no_batches=\
-        ClaimClassifierHyperParameterSearch(new_train_x,new_train_y,val_x, val_y)
+    best_lr, best_momentum, best_loss_function, best_optimizer, best_epochs, best_no_batches, multiplier = \
+        ClaimClassifierHyperParameterSearch(new_train_x, new_train_y, val_x, val_y)
+
     print("Best learning rate is: " + str(best_lr))
-    print("Best momentum is " + str(best_momentum))
-    print("Best loss function is " + str(best_loss_function))
-    print("Best optimizer rate is " + str(best_optimizer))
+    print("Best multiplier is " + str(multiplier))
     print("Best epoch number is " + str(best_epochs))
-    print("Best batch number is " + str(best_no_batches))
+
+    print("Not used:")
+    print("Best momentum is " + str(best_momentum))
+    print("Best optimizer rate is " + str(best_optimizer))
+    print("Best loss function is " + str(best_loss_function))
 
     # Testing
-    net.fit(new_train_x,new_train_y,best_lr,best_loss_function,best_optimizer,best_epochs,best_no_batches)
+    #net.fit(new_train_x, new_train_y, best_lr, best_loss_function, best_optimizer, best_epochs, best_no_batches)
     #    net.fit(new_train_x, new_train_y)
 
     # 4. evaluate model
     net = net.eval()  # set eval mode
     # # # # # # # # # # TESTING ON UNSEEN DATA # # # # # # # # # # # # # # # #
-    trained_model= load_model()
-    auc=trained_model.evaluate_architecture(test_x, test_y)
+    trained_model = load_model()
+    trained_model.eval()
+    auc = trained_model.evaluate_architecture(test_x, test_y)
     print("AUC on test data = %0.2f%%" % auc)
     # 5. save model
-
-
-
-
-
-
