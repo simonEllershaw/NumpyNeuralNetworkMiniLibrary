@@ -2,6 +2,9 @@ from sklearn.calibration import CalibratedClassifierCV
 from sklearn.model_selection import train_test_split
 import pickle
 import numpy as np
+import pandas as pd
+from sklearn import preprocessing
+from sklearn.preprocessing import LabelBinarizer
 
 
 def fit_and_calibrate_classifier(classifier, X, y):
@@ -40,8 +43,7 @@ class PricingModel():
         # If you wish to use the classifier in part 2, you will need
         # to implement a predict_proba for it before use
         # =============================================================
-        self.base_classifier = None # ADD YOUR BASE CLASSIFIER HERE
-
+        self.base_classifier = None  # ADD YOUR BASE CLASSIFIER HERE
 
     # YOU ARE ALLOWED TO ADD MORE ARGUMENTS AS NECESSARY TO THE _preprocessor METHOD
     def _preprocessor(self, X_raw):
@@ -63,7 +65,15 @@ class PricingModel():
         # =============================================================
         # YOUR CODE HERE
 
-        return  # YOUR CLEAN DATA AS A NUMPY ARRAY
+        one_hot_encoder = OneHotEncoder
+        part2_headers = {"drv_age1",'vh_age','vh_cyl','vh_din','pol_bonus','vh_sale_begin','vh_sale_end','vh_value','vh_speed'}
+
+        required_attributes = X_raw[part2_headers]
+
+        min_max_scaler = preprocessing.MinMaxScaler()
+        x_normed = min_max_scaler.fit_transform(required_attributes)
+
+        return x_normed
 
     def fit(self, X_raw, y_raw, claims_raw):
         """Classifier training function.
@@ -120,7 +130,6 @@ class PricingModel():
         # REMEMBER TO A SIMILAR LINE TO THE FOLLOWING SOMEWHERE IN THE CODE
         # X_clean = self._preprocessor(X_raw)
 
-
         return  # return probabilities for the positive class (label 1)
 
     def predict_premium(self, X_raw):
@@ -137,7 +146,7 @@ class PricingModel():
         -------
         numpy.ndarray
             A one dimensional array of the same length as the input with
-            values corresponding to the probability of beloning to the
+            values corresponding to the probability of belonging to the
             POSITIVE class (that had accidents)
         """
         # =============================================================
@@ -158,3 +167,33 @@ def load_model():
     with open('part3_pricing_model.pickle', 'rb') as target:
         trained_model = pickle.load(target)
     return trained_model
+
+
+def average_claim(claim_amounts):
+
+    total, count = 0, 0
+    claims = list()
+
+    for index, row in claim_amounts.iterrows():
+        if row['made_claim'] == 1:
+            total += row['claim_amount']
+            count += 1
+            claims.append(['claim_amount'])
+
+    average = total / count
+
+    return average
+
+
+if __name__ == "__main__":
+
+    dat = pd.read_csv("part3_training_data.csv")
+    attributes = dat.drop(columns=["claim_amount", "made_claim"])
+    y = dat["made_claim"]
+    claim_amounts = dat[['made_claim', 'claim_amount']]
+
+    classifier = PricingModel()
+    x_clean = classifier._preprocessor(attributes)
+
+
+
