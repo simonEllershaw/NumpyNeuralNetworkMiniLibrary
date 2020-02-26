@@ -47,7 +47,7 @@ class PricingModel():
         # If you wish to use the classifier in part 2, you will need
         # to implement a predict_proba for it before use
         # =============================================================
-        self.base_classifier = None  # ADD YOUR BASE CLASSIFIER HERE
+        self.base_classifier = ClaimClassifier()  # ADD YOUR BASE CLASSIFIER HERE
 
     # YOU ARE ALLOWED TO ADD MORE ARGUMENTS AS NECESSARY TO THE _preprocessor METHOD
     def _preprocessor(self, X_raw):
@@ -112,12 +112,13 @@ class PricingModel():
         # REMEMBER TO A SIMILAR LINE TO THE FOLLOWING SOMEWHERE IN THE CODE
         X_clean = self._preprocessor(X_raw)
 
+
         # THE FOLLOWING GETS CALLED IF YOU WISH TO CALIBRATE YOUR PROBABILITES
         if self.calibrate:
             self.base_classifier = fit_and_calibrate_classifier(
                 self.base_classifier, X_clean, y_raw)
-        else:
-            self.base_classifier = self.base_classifier.fit(X_clean, y_raw)
+        #else:
+        #    self.base_classifier = self.base_classifier.fit(X_clean, y_raw)
         return self.base_classifier
 
     def predict_claim_probability(self, X_raw, classifier =None):
@@ -165,7 +166,7 @@ class PricingModel():
         # =============================================================
         # REMEMBER TO INCLUDE ANY PRICING STRATEGY HERE.
         # For example you could scale all your prices down by a factor
-
+        X_raw= self._preprocessor(X_raw)
         return self.predict_claim_probability(X_raw) * self.y_mean
 
     def save_model(self):
@@ -189,27 +190,12 @@ def load_model2():
     return trained_model
 
 
-def average_claim(claim_amounts):
-    total, count = 0, 0
-    claims = list()
-
-    for index, row in claim_amounts.iterrows():
-        if row['made_claim'] == 1:
-            total += row['claim_amount']
-            count += 1
-            claims.append(['claim_amount'])
-
-    average = total / count
-
-    return average
-
-
 if __name__ == "__main__":
 
     dat = pd.read_csv("part3_training_data.csv")
     attributes = dat.drop(columns=["claim_amount", "made_claim"])
     y = dat["made_claim"]
-    claim_amounts = dat[['made_claim', 'claim_amount']]
+    claim_amounts = dat['claim_amount']
 
     # Clean data
 
@@ -281,4 +267,6 @@ if __name__ == "__main__":
     ####################
 
     probs = MyPricing_Model.predict_claim_probability(test_x)
-    print(probs)
+    MyPricing_Model.fit(attributes, y, claim_amounts)
+    prices = MyPricing_Model.predict_premium(attributes)
+    print(prices)
