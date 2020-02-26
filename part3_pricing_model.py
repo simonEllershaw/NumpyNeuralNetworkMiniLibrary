@@ -167,7 +167,12 @@ class PricingModel():
         # REMEMBER TO INCLUDE ANY PRICING STRATEGY HERE.
         # For example you could scale all your prices down by a factor
         X_raw= self._preprocessor(X_raw)
-        return self.predict_claim_probability(X_raw) * self.y_mean
+
+        premiums = self.predict_claim_probability(X_raw) * self.y_mean
+        premiums = np.array(premiums)
+        premiums= premiums.flatten()
+
+        return premiums
 
     def save_model(self):
         """Saves the class instance as a pickle file."""
@@ -229,6 +234,7 @@ if __name__ == "__main__":
     new_train_x = total_train[:, :-1]
     (unique, counts) = np.unique(new_train_y, return_counts=True)
 
+    """
     # New classifier Parameters
     varaibles = len(new_train_x[0])
     multiplier = 4
@@ -258,16 +264,18 @@ if __name__ == "__main__":
 
     # Set classifier for Model
     MyPricing_Model.base_classifier = best_net
-
+    
+    print("Saving...")
+    MyPricing_Model.save_model()
+    """
 
     # If not calculating from beginning
-    #MyPricing_Model = load_model()
+    MyPricing_Model = load_model()
     ####################
 
     probs = MyPricing_Model.predict_claim_probability(test_x)
     MyPricing_Model.fit(attributes, y, claim_amounts)
     prices = MyPricing_Model.predict_premium(attributes)
     print(prices)
+    print(prices.shape)
 
-    print("Saving...")
-    MyPricing_Model.save_model()
