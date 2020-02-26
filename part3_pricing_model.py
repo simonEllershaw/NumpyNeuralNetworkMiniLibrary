@@ -4,8 +4,13 @@ import pickle
 import numpy as np
 import pandas as pd
 from sklearn import preprocessing
-from sklearn.preprocessing import LabelBinarizer
-
+import part2_claim_classifier as part2
+import torch
+import torch.nn as nn
+from part2_claim_classifier import ClaimClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.utils import shuffle
+from sklearn.utils import resample
 
 def fit_and_calibrate_classifier(classifier, X, y):
     # DO NOT ALTER THIS FUNCTION
@@ -65,13 +70,15 @@ class PricingModel():
         # =============================================================
         # YOUR CODE HERE
 
-        one_hot_encoder = OneHotEncoder
-        part2_headers = {"drv_age1",'vh_age','vh_cyl','vh_din','pol_bonus','vh_sale_begin','vh_sale_end','vh_value','vh_speed'}
-
+        # Load simple data set used in part 2
+        part2_headers = {"drv_age1", 'vh_age', 'vh_cyl', 'vh_din', 'pol_bonus', 'vh_sale_begin', 'vh_sale_end',
+                         'vh_value', 'vh_speed'}
         required_attributes = X_raw[part2_headers]
 
+        # Use min/max normalisation
         min_max_scaler = preprocessing.MinMaxScaler()
         x_normed = min_max_scaler.fit_transform(required_attributes)
+
 
         return x_normed
 
@@ -109,7 +116,7 @@ class PricingModel():
             self.base_classifier = self.base_classifier.fit(X_clean, y_raw)
         return self.base_classifier
 
-    def predict_claim_probability(self, X_raw):
+    def predict_claim_probability(self, X_raw, classifier):
         """Classifier probability prediction function.
 
         Here you will implement the predict function for your classifier.
@@ -169,8 +176,14 @@ def load_model():
     return trained_model
 
 
-def average_claim(claim_amounts):
+def load_model2():
+    # Please alter this section so that it works in tandem with the save_model method of your class
+    with open('part2_claim_classifier.pickle', 'rb') as target:
+        trained_model = pickle.load(target)
+    return trained_model
 
+
+def average_claim(claim_amounts):
     total, count = 0, 0
     claims = list()
 
@@ -186,14 +199,67 @@ def average_claim(claim_amounts):
 
 
 if __name__ == "__main__":
-
     dat = pd.read_csv("part3_training_data.csv")
     attributes = dat.drop(columns=["claim_amount", "made_claim"])
     y = dat["made_claim"]
     claim_amounts = dat[['made_claim', 'claim_amount']]
 
+    # Clean data
+
     classifier = PricingModel()
     x_clean = classifier._preprocessor(attributes)
 
+    # Join data
+    y = list(y)
+    labels = np.reshape(y, (len(y), 1))
+    total = np.append(x_clean,labels, axis=1)
+
+    # Shuffle data and split
+    X, Y = shuffle(x_clean, labels)
+    train_x, test_x, train_y, test_y = train_test_split(X, Y)
+
+    # Load part 2 and test classifier
+    p2_class = ClaimClassifier()
+    p2_class = part2.load_model()
+    p2_class.eval()
+    p2_class.evaluate_architecture(test_x,test_y)
+
+    # Up sample
+    (unique, counts) = np.unique(train_y, return_counts=True)
+    total_train = np.append(train_x,train_y, axis=1)
+    total_train = pd.DataFrame(total_train)
+
+    df_class_0 = total_train[total_train.iloc[:,-1] == 0]
+    df_class_1 = total_train[total_train.iloc[:,-1] == 1]
+
+    total_train_class_1_over = df_class_1.sample(counts[0],replace=True)
+    test_over = pd.concat([df_class_0,total_train_class_1_over], axis=0)
+
+    total_train = np.array(test_over)
+
+    new_train_y = total_train[:, -1]
+    new_train_x = total_train[:, :-1]
+    (unique, counts) = np.unique(new_train_y, return_counts=True)
 
 
+    # New classifier
+    new_classifier = ClaimClassifier()
+    new_classifier.train()
+
+
+    # New classifier Parameters
+    learning = 0.05
+    momentum = 0.9
+    epochs = 200
+    batch_size = len(new_train_x)
+    criterion = nn.BCELoss()
+    optimiser = torch.optim.Adam(new_classifier.parameters(), lr=learning)
+
+
+    # Fit new classifier
+    new_classifier.fit(new_train_x,new_train_y,learning,criterion,optimiser,epochs,batch_size)
+
+
+    # Evaluate new classifier
+    new_classifier.eval()
+    new_classifier.evaluate_architecture(test_x, test_y)
