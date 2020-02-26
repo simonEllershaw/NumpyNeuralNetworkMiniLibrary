@@ -191,7 +191,7 @@ def ClaimClassifierHyperParameterSearch(data_x, data_y, test_x, test_y, variable
     """
     max_metric = 0
 
-    for i in range(10):
+    for i in range(1):
         multiplier = round(np.random.uniform(1, 15))
         new_net = ClaimClassifier(variables=variables,multiplier=multiplier)
         lrn_rate = np.random.uniform(0.0001, 0.15)
@@ -286,3 +286,6 @@ if __name__ == "__main__":
     auc = best_net.evaluate_architecture(test_x, test_y)
     print("AUC on test data = %0.2f%%" % auc)
     # 5. save model
+    output_test = pd.DataFrame(test_x)
+    output = best_net.predict(output_test)
+    print(type(output))
