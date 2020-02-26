@@ -168,7 +168,8 @@ class PricingModel():
         # For example you could scale all your prices down by a factor
         X_raw= self._preprocessor(X_raw)
 
-        premium_factor = 0.7
+        premium_factor = 0.85
+
         premiums = self.predict_claim_probability(X_raw) * self.y_mean * premium_factor
         premiums = np.array(premiums)
         premiums= premiums.flatten()
