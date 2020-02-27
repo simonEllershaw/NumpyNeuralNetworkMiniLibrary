@@ -145,9 +145,10 @@ class ClaimClassifier(T.nn.Module):
         pred_y, prob_y = self.predict_probabilities(data_x)
         Y = T.ByteTensor(data_y)
         pred_y = T.from_numpy(pred_y)
-        num_correct = T.sum(Y == pred_y)
 
-        acc = (num_correct.item() * 100.0 / len(data_y))  # scalar
+        #num_correct = T.sum(Y == pred_y)
+        #acc = (num_correct.item() * 100.0 / len(data_y))  # scalar
+        acc = accuracy_score(data_y,pred_y)
         print('Accuracy: %f' % acc)
         con_matrix = confusion_matrix(data_y, pred_y)
         print(con_matrix)
