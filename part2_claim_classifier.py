@@ -20,8 +20,8 @@ class ClaimClassifier(T.nn.Module):
     def __init__(self, variables=9, multiplier =14):
         super(ClaimClassifier, self).__init__()
         self.hid1 = T.nn.Linear(variables, multiplier * variables)  # 9-(8-8)-1
-        self.hid2 = T.nn.Linear(multiplier * variables, variables)
-        # self.hid3 =
+        self.hid2 = T.nn.Linear(multiplier * variables, multiplier*variables)
+        self.hid3 = T.nn.Linear(multiplier*variables, variables)
         self.oupt = T.nn.Linear(variables, 1)
         """
         Feel free to alter this as you wish, adding instance variables as
@@ -32,6 +32,7 @@ class ClaimClassifier(T.nn.Module):
     def forward(self, x):
         z = T.tanh(self.hid1(x))
         z = T.tanh(self.hid2(z))
+        z = T.tanh(self.hid3(z))
         z = T.sigmoid(self.oupt(z))
         return z
 
@@ -220,16 +221,16 @@ def ClaimClassifierHyperParameterSearch(data_x, data_y, test_x, test_y, variable
     The function should return your optimised hyper-parameters.
     """
     max_metric = 0
-    tests = 1
+    tests = 20
 
     for i in range(tests):
-        multiplier = round(np.random.uniform(1, 15))
+        multiplier = round(np.random.uniform(1, 6))
         new_net = ClaimClassifier(variables=variables, multiplier=multiplier)
         lrn_rate = np.random.uniform(0.0001, 0.15)
 
         loss = T.nn.BCELoss()
         no_batches = len(data_x)
-        epochs = round(np.random.uniform(100, 200))
+        epochs = round(np.random.uniform(50, 150))
         new_net.train()
         optimizer = T.optim.Adam(new_net.parameters(), lr=lrn_rate)
         new_net.fit(data_x, data_y, lrn_rate, loss, optimizer, epochs, no_batches)

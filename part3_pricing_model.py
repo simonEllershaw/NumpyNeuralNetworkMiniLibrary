@@ -4,13 +4,10 @@ import numpy as np
 import pandas as pd
 from sklearn import preprocessing
 import part2_claim_classifier as part2
-import torch
-import torch.nn as nn
 from part2_claim_classifier import ClaimClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
-from sklearn.externals import joblib
-
+from sklearn.preprocessing import LabelBinarizer
 
 def fit_and_calibrate_classifier(classifier, X, y):
     # DO NOT ALTER THIS FUNCTION
@@ -82,16 +79,36 @@ class PricingModel():
         required_attributes = X_raw[part2_headers]
         min_max_scaler = preprocessing.MinMaxScaler()
 
+        # TODO Fix this needs to only calc scalers when passing the whole data set
 
+        # Temporary hack
+        x_normed = min_max_scaler.fit_transform(required_attributes)
+        # End of Hack
+        """
         # Use min/max normalisation
         if training:
             x_normed = min_max_scaler.fit_transform(required_attributes)
-            self.normalisation = min_max_scaler
+            self.normalisation = min_max_scaler.get_params()
 
         else:
-            x_normed = self.normalisation.transform(required_attributes)
+            params = self.normalisation
+            x_normed = min_max_scaler.fit_transform(required_attributes,y=None,params)
+        """
+        # Add extra columns here
+        binarizer = LabelBinarizer()
+        headers = {'drv_sex1', 'vh_type', 'pol_coverage', 'pol_usage'}
 
-        return x_normed
+        for header in headers:
+            data = X_raw[header]
+            binarized = binarizer.fit_transform(data)
+            if len(binarized[0]) > 1:
+                binarized = binarized[:, :-1]
+
+            binarized = np.asarray(binarized)
+
+            total = np.append(x_normed, binarized, axis=1)
+
+        return total
 
     def fit(self, X_raw, y_raw, claims_raw):
         """Classifier training function.
@@ -272,6 +289,9 @@ if __name__ == "__main__":
     """
 
     # Evaluate best net
+    print("")
+    print("Final Model: ")
+
     best_net.eval()
     best_net.evaluate_architecture(test_x, test_y)
 
@@ -282,9 +302,8 @@ if __name__ == "__main__":
     # If not calculating from beginning
     #MyPricing_Model = load_model()
     ####################
-    print("")
-    print("Final Model: ")
 
+    # Calculate probabilities and prices
     probs = MyPricing_Model.predict_claim_probability(test_x)
     MyPricing_Model.fit(attributes, y, claim_amounts)
     prices = MyPricing_Model.predict_premium(attributes)
