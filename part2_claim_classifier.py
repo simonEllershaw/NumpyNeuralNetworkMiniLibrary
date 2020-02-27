@@ -219,9 +219,9 @@ def ClaimClassifierHyperParameterSearch(data_x, data_y, test_x, test_y, variable
     The function should return your optimised hyper-parameters.
     """
     max_metric = 0
-    tests = 20
+    searches = 2
 
-    for i in range(tests):
+    for i in range(searches):
         multiplier = round(np.random.uniform(1, 6))
         new_net = ClaimClassifier(variables=variables, multiplier=multiplier)
         lrn_rate = np.random.uniform(0.0001, 0.15)
@@ -234,7 +234,7 @@ def ClaimClassifierHyperParameterSearch(data_x, data_y, test_x, test_y, variable
         new_net.fit(data_x, data_y, loss, optimizer, epochs, no_batches)
 
         new_net.eval()
-        print("Model (" + str(i + 1) + ") out of " + str(tests))
+        print("Model (" + str(i + 1) + ") out of " + str(searches))
         metric = new_net.evaluate_architecture(test_x, test_y)
 
         if metric > max_metric:

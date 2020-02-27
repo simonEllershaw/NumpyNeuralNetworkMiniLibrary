@@ -5,12 +5,12 @@ import pandas as pd
 import torch
 import torch.nn as nn
 from sklearn import preprocessing
-import part2_claim_classifier as part2
 from part2_claim_classifier import ClaimClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.metrics import roc_auc_score
+import part2_claim_classifier as part2
 
 def fit_and_calibrate_classifier(classifier, X, y):
     # DO NOT ALTER THIS FUNCTION
@@ -137,15 +137,47 @@ class PricingModel():
         self.y_mean = np.mean(claims_raw[nnz])
         # =============================================================
         # REMEMBER TO A SIMILAR LINE TO THE FOLLOWING SOMEWHERE IN THE CODE
-        X_clean = self._preprocessor(X_raw)
+        X_clean = self._preprocessor(X_raw,training=True)
+
+        #Split into training/Validation
+        training_x, validation_x, training_y, validation_y = train_test_split(X_clean, y_raw, test_size=0.2)
+
+        #Upsample data
+        (unique, counts) = np.unique(training_y, return_counts=True)
+        total_train = np.append(training_x, training_y, axis=1)
+        total_train = pd.DataFrame(total_train)
+
+        df_class_0 = total_train[total_train.iloc[:, -1] == 0]
+        df_class_1 = total_train[total_train.iloc[:, -1] == 1]
+
+        total_train_class_1_over = df_class_1.sample(counts[0], replace=True)
+        test_over = pd.concat([df_class_0, total_train_class_1_over], axis=0)
+
+        total_train = np.array(test_over)
+
+        new_train_y = total_train[:, -1]
+        new_train_x = total_train[:, :-1]
+        new_train_y = np.expand_dims(new_train_y, 1)
+
+        (unique, counts) = np.unique(new_train_y, return_counts=True)
+        varaibles = len(new_train_x[0])
+
+        validation_x = np.array(validation_x)
+        validation_y = np.array(validation_y)
+
+        # Find best parameters best classifier
+        best_lr, best_epochs, multiplier, best_net = \
+            part2.ClaimClassifierHyperParameterSearch(new_train_x, new_train_y, validation_x, validation_y, varaibles,
+                                                      pricing=True)
+
 
 
         # THE FOLLOWING GETS CALLED IF YOU WISH TO CALIBRATE YOUR PROBABILITES
         if self.calibrate:
             self.base_classifier = fit_and_calibrate_classifier(
                 self.base_classifier, X_clean, y_raw)
-        #else:
-        #    self.base_classifier = self.base_classifier.fit(X_clean, y_raw)
+        else:
+            self.base_classifier = best_net # Set classifier to model found
         return self.base_classifier
 
     def predict_claim_probability(self, X_raw, classifier =None):
@@ -167,11 +199,14 @@ class PricingModel():
         """
         # =============================================================
         # REMEMBER TO A SIMILAR LINE TO THE FOLLOWING SOMEWHERE IN THE CODE
-        # X_clean = self._preprocessor(X_raw)
-        X_raw = pd.DataFrame(X_raw)
-        labels, probabilities = self.base_classifier.predict_probabilities(X_raw)
+        X_clean = self._preprocessor(X_raw)
+        #X_clean = pd.DataFrame(X_clean)
 
-        return probabilities
+        inputs = torch.Tensor(X_clean)
+        output = self.base_classifier(inputs)
+        prob_y = output.detach().numpy()
+
+        return prob_y
 
     def predict_premium(self, X_raw):
         """Predicts premiums based on the pricing model.
@@ -193,8 +228,6 @@ class PricingModel():
         # =============================================================
         # REMEMBER TO INCLUDE ANY PRICING STRATEGY HERE.
         # For example you could scale all your prices down by a factor
-        X_raw= self._preprocessor(X_raw)
-
         premium_factor = 0.8
 
         premiums = self.predict_claim_probability(X_raw) * self.y_mean * premium_factor
@@ -234,39 +267,45 @@ if __name__ == "__main__":
     # Clean data
 
     MyPricing_Model = PricingModel()
-    x_clean = MyPricing_Model._preprocessor(attributes,training=True)
 
     # Join data
-    y = list(y)
-    labels = np.reshape(y, (len(y), 1))
-    total = np.append(x_clean, labels, axis=1)
+    #y = list(y)
+    #labels = np.reshape(y, (len(y), 1))
+    #total = np.append(x_clean, labels, axis=1)
 
 
     # Shuffle data and split
-    X, Y = shuffle(x_clean, labels)
-    train_x, test_x, train_y, test_y = train_test_split(X, Y, test_size=0.3)
-    valid_x, test_x, valid_y, test_y = train_test_split(train_x, train_y, test_size=0.5)
+    X, Y = shuffle(attributes, y)
+
+    train_x, test_x, train_y, test_y = train_test_split(X, Y, test_size=0.15)
+    train_x = pd.DataFrame(train_x)
+    train_y = pd.DataFrame(train_y)
+
+    # Fit pricing model
+    MyPricing_Model.fit(train_x, train_y, claim_amounts)
+    probs = MyPricing_Model.predict_claim_probability(test_x)
+    roc = roc_auc_score(test_y, probs)
+    print("Roc Score on test Data: " + str(roc))
+    prices = MyPricing_Model.predict_premium(attributes)
+    print(prices)
+
+    # Save Model
+    print("Saving...")
+    MyPricing_Model.save_model()
+
+    # Load Model
+    print("Loading...")
+    loaded_model = PricingModel()
+    loaded_model = load_model()
+
+    # predict with loaded
+    loaded_probs = loaded_model.predict_claim_probability(test_x)
+    roc = roc_auc_score(test_y,loaded_probs)
+    print("Roc Score on test Data: " + str(roc))
+
+
+
     """
-    # Up sample
-    (unique, counts) = np.unique(train_y, return_counts=True)
-    total_train = np.append(train_x,train_y, axis=1)
-    total_train = pd.DataFrame(total_train)
-
-    df_class_0 = total_train[total_train.iloc[:,-1] == 0]
-    df_class_1 = total_train[total_train.iloc[:,-1] == 1]
-
-    total_train_class_1_over = df_class_1.sample(counts[0],replace=True)
-    test_over = pd.concat([df_class_0,total_train_class_1_over], axis=0)
-
-    total_train = np.array(test_over)
-
-    new_train_y = total_train[:, -1]
-    new_train_x = total_train[:, :-1]
-    new_train_y = np.expand_dims(new_train_y,1)
-    (unique, counts) = np.unique(new_train_y, return_counts=True)
-    varaibles = len(new_train_x[0])
-    
-    
     # New classifier Parameters
     
     multiplier = 4
@@ -300,22 +339,18 @@ if __name__ == "__main__":
 
     # Set classifier for Model
     MyPricing_Model.base_classifier = best_net
-    """
+    
 
     # If not calculating from beginning
-    MyPricing_Model = load_model()
+
     ####################
-
+    #print(MyPricing_Model.base_classifier)
     # Calculate probabilities and prices
-    probs = MyPricing_Model.predict_claim_probability(test_x)
+    """
 
-    roc = roc_auc_score(test_y, probs)
-    print("Roc Score on test Data: " + str(roc))
 
-    MyPricing_Model.fit(attributes, y, claim_amounts)
-    prices = MyPricing_Model.predict_premium(attributes)
 
-    print(prices)
-    print("Saving...")
-    MyPricing_Model.save_model()
+
+
+
 
