@@ -50,7 +50,7 @@ class PricingModel():
         self.base_classifier = ClaimClassifier()  # ADD YOUR BASE CLASSIFIER HERE
 
     # YOU ARE ALLOWED TO ADD MORE ARGUMENTS AS NECESSARY TO THE _preprocessor METHOD
-    def _preprocessor(self, X_raw, testing = False):
+    def _preprocessor(self, X_raw, training = False):
         """Data preprocessing function.
 
         This function prepares the features of the data for training,
@@ -83,12 +83,11 @@ class PricingModel():
 
 
         # Use min/max normalisation
-        if not testing:
+        if training:
             x_normed = min_max_scaler.fit_transform(required_attributes)
-            self.normalisation = min_max_scaler.get_params()
+            self.normalisation = min_max_scaler
         else:
-            min_max_scaler.set_params(self.normalisation)
-            min_max_scaler.transform(required_attributes)
+            x_normed = self.normalisation.transform(required_attributes)
 
         return x_normed
 
@@ -147,7 +146,7 @@ class PricingModel():
         # =============================================================
         # REMEMBER TO A SIMILAR LINE TO THE FOLLOWING SOMEWHERE IN THE CODE
         # X_clean = self._preprocessor(X_raw)
-        X_raw = pd.DataFrame(X_raw,testing=True)
+        X_raw = pd.DataFrame(X_raw)
         labels, probabilities = self.base_classifier.predict_probabilities(X_raw)
 
         return probabilities
@@ -213,11 +212,8 @@ if __name__ == "__main__":
     # Clean data
 
     MyPricing_Model = PricingModel()
-    x_clean = MyPricing_Model._preprocessor(attributes)
+    x_clean = MyPricing_Model._preprocessor(attributes,training=True)
 
-
-
-    """
     # Join data
     y = list(y)
     labels = np.reshape(y, (len(y), 1))
@@ -243,11 +239,13 @@ if __name__ == "__main__":
 
     new_train_y = total_train[:, -1]
     new_train_x = total_train[:, :-1]
+    new_train_y = np.expand_dims(new_train_y,1)
     (unique, counts) = np.unique(new_train_y, return_counts=True)
-
-
-    # New classifier Parameters
     varaibles = len(new_train_x[0])
+
+    """
+    # New classifier Parameters
+    
     multiplier = 4
     new_classifier = ClaimClassifier(variables=varaibles, multiplier=multiplier)
     new_classifier.train()
@@ -260,30 +258,30 @@ if __name__ == "__main__":
 
     # Fit new classifier
     new_classifier.fit(new_train_x, new_train_y, learning,criterion,optimiser,epochs,batch_size)
+    """
 
     best_lr, best_epochs, multiplier, best_net = \
         part2.ClaimClassifierHyperParameterSearch(new_train_x, new_train_y, valid_x, valid_y, varaibles,pricing=True)
 
+
+    """
     # Evaluate new classifier
     new_classifier.eval()
     new_classifier.evaluate_architecture(test_x, test_y)
-    
+    """
+
     # Evaluate best net
-    
     best_net.eval()
     best_net.evaluate_architecture(test_x, test_y)
 
     # Set classifier for Model
     MyPricing_Model.base_classifier = best_net
-    
-
 
 
     # If not calculating from beginning
-    MyPricing_Model = load_model()
+    #MyPricing_Model = load_model()
     ####################
-    
-    
+
     probs = MyPricing_Model.predict_claim_probability(test_x)
     MyPricing_Model.fit(attributes, y, claim_amounts)
     prices = MyPricing_Model.predict_premium(attributes)
@@ -292,4 +290,3 @@ if __name__ == "__main__":
 
     print("Saving...")
     MyPricing_Model.save_model()
-    """

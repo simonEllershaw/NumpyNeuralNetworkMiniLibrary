@@ -152,16 +152,16 @@ class ClaimClassifier(T.nn.Module):
         con_matrix = confusion_matrix(data_y, pred_y)
         # precision tp / (tp + fp)
         precision = precision_score(data_y, pred_y)
-        print('Precision: %f' % precision)
+        #print('Precision: %f' % precision)
         # recall: tp / (tp + fn)
         recall = recall_score(data_y, pred_y)
-        print('Recall: %f' % recall)
+        #print('Recall: %f' % recall)
         # f1: 2 tp / (2 tp + fp + fn)
         f1 = f1_score(data_y, pred_y)
-        print('F1 score: %f' % f1)
+        #print('F1 score: %f' % f1)
         # accuracy: (tp + tn) / (p + n)
         accuracy = accuracy_score(data_y, pred_y)
-        print('Accuracy: %f' % accuracy)
+        #print('Accuracy: %f' % accuracy)
         print(con_matrix)
         roc = roc_auc_score(data_y, prob_y)
         print('ROC: %f' % roc)
@@ -220,8 +220,9 @@ def ClaimClassifierHyperParameterSearch(data_x, data_y, test_x, test_y, variable
     The function should return your optimised hyper-parameters.
     """
     max_metric = 0
+    tests = 1
 
-    for i in range(30):
+    for i in range(tests):
         multiplier = round(np.random.uniform(1, 15))
         new_net = ClaimClassifier(variables=variables, multiplier=multiplier)
         lrn_rate = np.random.uniform(0.0001, 0.15)
@@ -234,7 +235,7 @@ def ClaimClassifierHyperParameterSearch(data_x, data_y, test_x, test_y, variable
         new_net.fit(data_x, data_y, lrn_rate, loss, optimizer, epochs, no_batches)
 
         new_net.eval()
-
+        print("Model (" + str(i+1) + ") out of " + str(tests))
         metric = new_net.evaluate_architecture(test_x, test_y)
 
         if metric > max_metric:
