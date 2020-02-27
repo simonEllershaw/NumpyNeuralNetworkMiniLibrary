@@ -9,6 +9,7 @@ import torch.nn as nn
 from part2_claim_classifier import ClaimClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
+from sklearn.preprocessing import _data
 
 
 def fit_and_calibrate_classifier(classifier, X, y):
@@ -86,6 +87,7 @@ class PricingModel():
         if training:
             x_normed = min_max_scaler.fit_transform(required_attributes)
             self.normalisation = min_max_scaler
+
         else:
             x_normed = self.normalisation.transform(required_attributes)
 
@@ -261,8 +263,7 @@ if __name__ == "__main__":
     """
 
     best_lr, best_epochs, multiplier, best_net = \
-        part2.ClaimClassifierHyperParameterSearch(new_train_x, new_train_y, valid_x, valid_y, varaibles,pricing=True)
-
+        part2.ClaimClassifierHyperParameterSearch(new_train_x, new_train_y, valid_x, valid_y, varaibles, pricing=True)
 
     """
     # Evaluate new classifier
@@ -281,12 +282,15 @@ if __name__ == "__main__":
     # If not calculating from beginning
     #MyPricing_Model = load_model()
     ####################
+    print("")
+    print("Final Model: ")
 
     probs = MyPricing_Model.predict_claim_probability(test_x)
     MyPricing_Model.fit(attributes, y, claim_amounts)
     prices = MyPricing_Model.predict_premium(attributes)
-    print(prices)
-    print(prices.shape)
 
     print("Saving...")
     MyPricing_Model.save_model()
+
+    loaded_pricing_model = PricingModel()
+    loaded_pricing_model = load_model()
