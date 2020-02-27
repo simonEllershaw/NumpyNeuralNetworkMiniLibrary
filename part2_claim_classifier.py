@@ -17,12 +17,12 @@ import pandas as pd
 
 class ClaimClassifier(T.nn.Module):
 
-    def __init__(self, variables=9, multiplier =14):
+    def __init__(self, variables=9, multiplier=14):
         super(ClaimClassifier, self).__init__()
         self.hid1 = T.nn.Linear(variables, multiplier * variables)  # 9-(8-8)-1
-        self.hid2 = T.nn.Linear(multiplier * variables, multiplier*variables)
-        self.hid3 = T.nn.Linear(multiplier*variables, variables)
-        self.oupt = T.nn.Linear(variables, 1)
+        self.hid2 = T.nn.Linear(multiplier * variables, variables)
+        #self.hid3 = T.nn.Linear(multiplier * variables, variables)
+        self.output = T.nn.Linear(variables, 1)
         """
         Feel free to alter this as you wish, adding instance variables as
         necessary. 
@@ -32,8 +32,8 @@ class ClaimClassifier(T.nn.Module):
     def forward(self, x):
         z = T.tanh(self.hid1(x))
         z = T.tanh(self.hid2(z))
-        z = T.tanh(self.hid3(z))
-        z = T.sigmoid(self.oupt(z))
+        z = T.tanh(z)
+        z = T.sigmoid(self.output(z))
         return z
 
     def _preprocessor(self, X_raw):
@@ -59,7 +59,7 @@ class ClaimClassifier(T.nn.Module):
 
         return X_normed  # YOUR CLEAN DATA AS A NUMPY ARRAY
 
-    def fit(self, new_train_x, new_train_y, lrn_rate, loss, optimizer, max_epochs, n_batches):
+    def fit(self, new_train_x, new_train_y, loss, optimizer, max_epochs, n_batches):
         """Classifier training function.
 
         Here you will implement the training function for your classifier.
@@ -84,20 +84,19 @@ class ClaimClassifier(T.nn.Module):
             for i in range(total_batches):
                 #   for data in batcher:
                 #
-                local_X, local_y = new_train_x[i * n_batches:(i + 1) * n_batches, ], new_train_y[
-                                                                                     i * n_batches:(
-                                                                                                               i + 1) * n_batches, ]
+                local_X, local_y = new_train_x[i * n_batches:(i + 1) * n_batches, ],\
+                                   new_train_y[i * n_batches:(i + 1) * n_batches, ]
                 # RANDOMLY SHUFFLE AND THEN SPLIT
                 X = T.Tensor(local_X)
                 Y = T.Tensor(local_y)
 
                 # changed from optimizer to net.zero_grad
-                self.zero_grad()
-                oupt = self(X)
-                #  print(oupt)
-                # changing loss function to MSE
-                loss_obj = loss(oupt, Y)
-                # print(loss_obj)
+                optimizer.zero_grad()
+
+                output = self(X)
+
+                loss_obj = loss(output, Y)
+
                 loss_obj.backward()
                 optimizer.step()
 
@@ -123,7 +122,7 @@ class ClaimClassifier(T.nn.Module):
         oupt = self(X)
         pred_y = oupt >= 0.5
         pred_y = pred_y.numpy()
-        prob_y=oupt.detach().numpy()
+        prob_y = oupt.detach().numpy()
 
         # REMEMBER TO HAVE THE FOLLOWING LINE SOMEWHERE IN THE CODE
         # X_clean = self._preprocessor(X_raw)
@@ -153,16 +152,16 @@ class ClaimClassifier(T.nn.Module):
         con_matrix = confusion_matrix(data_y, pred_y)
         # precision tp / (tp + fp)
         precision = precision_score(data_y, pred_y)
-        #print('Precision: %f' % precision)
+        # print('Precision: %f' % precision)
         # recall: tp / (tp + fn)
         recall = recall_score(data_y, pred_y)
-        #print('Recall: %f' % recall)
+        # print('Recall: %f' % recall)
         # f1: 2 tp / (2 tp + fp + fn)
         f1 = f1_score(data_y, pred_y)
-        #print('F1 score: %f' % f1)
+        # print('F1 score: %f' % f1)
         # accuracy: (tp + tn) / (p + n)
         accuracy = accuracy_score(data_y, pred_y)
-        #print('Accuracy: %f' % accuracy)
+        # print('Accuracy: %f' % accuracy)
         print(con_matrix)
         roc = roc_auc_score(data_y, prob_y)
         print('ROC: %f' % roc)
@@ -195,7 +194,7 @@ class ClaimClassifier(T.nn.Module):
         oupt = self(X)
         pred_y = oupt >= 0.5
         pred_y = pred_y.numpy()
-        prob_y=oupt.detach().numpy()
+        prob_y = oupt.detach().numpy()
 
         # REMEMBER TO HAVE THE FOLLOWING LINE SOMEWHERE IN THE CODE
         # X_clean = self._preprocessor(X_raw)
@@ -203,6 +202,7 @@ class ClaimClassifier(T.nn.Module):
         # YOUR CODE HERE
 
         return pred_y, prob_y  # YOUR PREDICTED CLASS LABELS
+
 
 def load_model():
     # Please alter this section so that it works in tandem with the save_model method of your class
@@ -212,7 +212,7 @@ def load_model():
 
 
 # ENSURE TO ADD IN WHATEVER INPUTS YOU DEEM NECESSARRY TO THIS FUNCTION
-def ClaimClassifierHyperParameterSearch(data_x, data_y, test_x, test_y, variables =9, pricing = False):
+def ClaimClassifierHyperParameterSearch(data_x, data_y, test_x, test_y, variables=9, pricing=False):
     """Performs a hyper-parameter for fine-tuning the classifier.
 
     Implement a function that performs a hyper-parameter search for your
@@ -233,10 +233,10 @@ def ClaimClassifierHyperParameterSearch(data_x, data_y, test_x, test_y, variable
         epochs = round(np.random.uniform(50, 150))
         new_net.train()
         optimizer = T.optim.Adam(new_net.parameters(), lr=lrn_rate)
-        new_net.fit(data_x, data_y, lrn_rate, loss, optimizer, epochs, no_batches)
+        new_net.fit(data_x, data_y, loss, optimizer, epochs, no_batches)
 
         new_net.eval()
-        print("Model (" + str(i+1) + ") out of " + str(tests))
+        print("Model (" + str(i + 1) + ") out of " + str(tests))
         metric = new_net.evaluate_architecture(test_x, test_y)
 
         if metric > max_metric:
@@ -302,7 +302,7 @@ if __name__ == "__main__":
     print("Best epoch number is " + str(best_epochs))
 
     # Testing
-    #net.fit(new_train_x, new_train_y, best_lr, best_loss_function, best_optimizer, best_epochs, best_no_batches)
+    # net.fit(new_train_x, new_train_y, best_lr, best_loss_function, best_optimizer, best_epochs, best_no_batches)
     #    net.fit(new_train_x, new_train_y)
 
     # 4. evaluate model
@@ -320,4 +320,4 @@ if __name__ == "__main__":
     # 5. save model
     output_test = pd.DataFrame(test_x)
     output = best_net.predict(output_test)
-    print(type(output))
+
