@@ -283,7 +283,7 @@ if __name__ == "__main__":
     train_x = pd.DataFrame(train_x)
     train_y = pd.DataFrame(train_y)
 
-    """
+
     # Fit pricing model
     MyPricing_Model.fit(train_x, train_y, claim_amounts)
     probs = MyPricing_Model.predict_claim_probability(test_x)
@@ -298,7 +298,7 @@ if __name__ == "__main__":
     MyPricing_Model.save_model()
     print(MyPricing_Model.means)
     print(MyPricing_Model.std_dev)
-    """
+
 
     # Load Model
     print("Loading...")
