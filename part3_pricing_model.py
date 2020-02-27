@@ -48,7 +48,7 @@ class PricingModel():
         # If you wish to use the classifier in part 2, you will need
         # to implement a predict_proba for it before use
         # =============================================================
-        self.base_classifier = ClaimClassifier()  # ADD YOUR BASE CLASSIFIER HERE
+        self.base_classifier = None  # ADD YOUR BASE CLASSIFIER HERE
 
     # YOU ARE ALLOWED TO ADD MORE ARGUMENTS AS NECESSARY TO THE _preprocessor METHOD
     def _preprocessor(self, X_raw, training = False):
@@ -80,13 +80,21 @@ class PricingModel():
         #  drv_age2
 
         required_attributes = X_raw[part2_headers]
-        min_max_scaler = preprocessing.MinMaxScaler()
 
-        # TODO Fix this needs to only calc scalers when passing the whole data set
+        required_attributes = np.array(required_attributes)
 
-        # Temporary hack
-        x_normed = min_max_scaler.fit_transform(required_attributes)
-        # End of Hack
+        if training:
+            self.means = np.mean(required_attributes, axis=0)
+            self.std_dev = np.std(required_attributes, axis=0)
+
+        # Apply Normalisation to the data
+        for i in range(len(required_attributes)):
+            for j in range(len(required_attributes[0])):
+                required_attributes[i, j] = required_attributes[i, j] - self.means[j]
+                required_attributes[i, j] = required_attributes[i, j] / self.std_dev[j]
+
+        x_normed = required_attributes
+
         """
         # Use min/max normalisation
         if training:
@@ -178,9 +186,10 @@ class PricingModel():
                 self.base_classifier, X_clean, y_raw)
         else:
             self.base_classifier = best_net # Set classifier to model found
+
         return self.base_classifier
 
-    def predict_claim_probability(self, X_raw, classifier =None):
+    def predict_claim_probability(self, X_raw):
         """Classifier probability prediction function.
 
         Here you will implement the predict function for your classifier.
@@ -200,10 +209,11 @@ class PricingModel():
         # =============================================================
         # REMEMBER TO A SIMILAR LINE TO THE FOLLOWING SOMEWHERE IN THE CODE
         X_clean = self._preprocessor(X_raw)
-        #X_clean = pd.DataFrame(X_clean)
-
         inputs = torch.Tensor(X_clean)
-        output = self.base_classifier(inputs)
+        best_classifier = ClaimClassifier()
+        best_classifier = self.base_classifier
+        best_classifier.eval()
+        output = best_classifier(inputs)
         prob_y = output.detach().numpy()
 
         return prob_y
@@ -249,14 +259,6 @@ def load_model():
         trained_model = pickle.load(target)
     return trained_model
 
-
-def load_model2():
-    # Please alter this section so that it works in tandem with the save_model method of your class
-    with open('part2_claim_classifier.pickle', 'rb') as target:
-        trained_model = pickle.load(target)
-    return trained_model
-
-
 if __name__ == "__main__":
 
     dat = pd.read_csv("part3_training_data.csv")
@@ -267,12 +269,6 @@ if __name__ == "__main__":
     # Clean data
 
     MyPricing_Model = PricingModel()
-
-    # Join data
-    #y = list(y)
-    #labels = np.reshape(y, (len(y), 1))
-    #total = np.append(x_clean, labels, axis=1)
-
 
     # Shuffle data and split
     X, Y = shuffle(attributes, y)
@@ -293,9 +289,9 @@ if __name__ == "__main__":
     print("Saving...")
     MyPricing_Model.save_model()
 
+
     # Load Model
     print("Loading...")
-    loaded_model = PricingModel()
     loaded_model = load_model()
 
     # predict with loaded

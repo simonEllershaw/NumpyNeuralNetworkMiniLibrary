@@ -17,10 +17,10 @@ import pandas as pd
 
 class ClaimClassifier(T.nn.Module):
 
-    def __init__(self, variables=9, multiplier=14):
+    def __init__(self, variables=9, multiplier=6):
         super(ClaimClassifier, self).__init__()
-        self.hid1 = T.nn.Linear(variables, multiplier * variables)  # 9-(8-8)-1
-        self.hid2 = T.nn.Linear(multiplier * variables, variables)
+        self.hid1 = T.nn.Linear(variables, 6 * variables)  # 9-(8-8)-1
+        self.hid2 = T.nn.Linear(6 * variables, variables)
         self.output = T.nn.Linear(variables, 1)
         """
         Feel free to alter this as you wish, adding instance variables as
@@ -145,21 +145,10 @@ class ClaimClassifier(T.nn.Module):
         Y = T.ByteTensor(data_y)
         pred_y = T.from_numpy(pred_y)
         num_correct = T.sum(Y == pred_y)
+
         acc = (num_correct.item() * 100.0 / len(data_y))  # scalar
         print('Accuracy: %f' % acc)
         con_matrix = confusion_matrix(data_y, pred_y)
-        # precision tp / (tp + fp)
-        precision = precision_score(data_y, pred_y)
-        # print('Precision: %f' % precision)
-        # recall: tp / (tp + fn)
-        recall = recall_score(data_y, pred_y)
-        # print('Recall: %f' % recall)
-        # f1: 2 tp / (2 tp + fp + fn)
-        f1 = f1_score(data_y, pred_y)
-        # print('F1 score: %f' % f1)
-        # accuracy: (tp + tn) / (p + n)
-        accuracy = accuracy_score(data_y, pred_y)
-        # print('Accuracy: %f' % accuracy)
         print(con_matrix)
         roc = roc_auc_score(data_y, prob_y)
         print('ROC: %f' % roc)
