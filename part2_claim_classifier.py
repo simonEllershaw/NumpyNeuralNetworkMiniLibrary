@@ -129,7 +129,7 @@ class ClaimClassifier(T.nn.Module):
 
         # YOUR CODE HERE
 
-        return pred_y, prob_y  # YOUR PREDICTED CLASS LABELS
+        return pred_y  # YOUR PREDICTED CLASS LABELS
 
     def evaluate_architecture(self, data_x, data_y):
         """Architecture evaluation utility.
@@ -143,7 +143,7 @@ class ClaimClassifier(T.nn.Module):
         # data_x and data_y are numpy array-of-arrays matrices
 
         data_x = pd.DataFrame(data=data_x)
-        pred_y, prob_y = self.predict(data_x)
+        pred_y, prob_y = self.predict_probabilities(data_x)
         Y = T.ByteTensor(data_y)
         pred_y = T.from_numpy(pred_y)
         num_correct = T.sum(Y == pred_y)
@@ -172,6 +172,36 @@ class ClaimClassifier(T.nn.Module):
         with open('part2_claim_classifier.pickle', 'wb') as target:
             pickle.dump(model, target)
 
+    def predict_probabilities(self, X_raw):
+        """Classifier probability prediction function.
+
+        Here you will implement the predict function for your classifier.
+
+        Parameters
+        ----------
+        X_raw : ndarray
+            An array, this is the raw data as downloaded
+
+        Returns
+        -------
+        ndarray
+            A one dimensional array of the same length as the input with
+            values corresponding to the probability of beloning to the
+            POSITIVE class (that had accidents)
+        """
+        X_clean = self._preprocessor(X_raw)
+        X = T.Tensor(X_clean)
+        oupt = self(X)
+        pred_y = oupt >= 0.5
+        pred_y = pred_y.numpy()
+        prob_y=oupt.detach().numpy()
+
+        # REMEMBER TO HAVE THE FOLLOWING LINE SOMEWHERE IN THE CODE
+        # X_clean = self._preprocessor(X_raw)
+
+        # YOUR CODE HERE
+
+        return pred_y, prob_y  # YOUR PREDICTED CLASS LABELS
 
 def load_model():
     # Please alter this section so that it works in tandem with the save_model method of your class

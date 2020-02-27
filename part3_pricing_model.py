@@ -142,7 +142,7 @@ class PricingModel():
         # REMEMBER TO A SIMILAR LINE TO THE FOLLOWING SOMEWHERE IN THE CODE
         # X_clean = self._preprocessor(X_raw)
         X_raw = pd.DataFrame(X_raw)
-        labels, probabilities = self.base_classifier.predict(X_raw)
+        labels, probabilities = self.base_classifier.predict_probabilities(X_raw)
 
         return probabilities
 
