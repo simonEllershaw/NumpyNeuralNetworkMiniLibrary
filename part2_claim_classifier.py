@@ -21,7 +21,6 @@ class ClaimClassifier(T.nn.Module):
         super(ClaimClassifier, self).__init__()
         self.hid1 = T.nn.Linear(variables, multiplier * variables)  # 9-(8-8)-1
         self.hid2 = T.nn.Linear(multiplier * variables, variables)
-        #self.hid3 = T.nn.Linear(multiplier * variables, variables)
         self.output = T.nn.Linear(variables, 1)
         """
         Feel free to alter this as you wish, adding instance variables as
@@ -32,7 +31,6 @@ class ClaimClassifier(T.nn.Module):
     def forward(self, x):
         z = T.tanh(self.hid1(x))
         z = T.tanh(self.hid2(z))
-        z = T.tanh(z)
         z = T.sigmoid(self.output(z))
         return z
 

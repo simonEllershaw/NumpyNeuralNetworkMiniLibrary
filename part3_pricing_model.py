@@ -10,6 +10,7 @@ from part2_claim_classifier import ClaimClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
 from sklearn.preprocessing import LabelBinarizer
+from sklearn.metrics import roc_auc_score
 
 def fit_and_calibrate_classifier(classifier, X, y):
     # DO NOT ALTER THIS FUNCTION
@@ -264,7 +265,7 @@ if __name__ == "__main__":
     new_train_y = np.expand_dims(new_train_y,1)
     (unique, counts) = np.unique(new_train_y, return_counts=True)
     varaibles = len(new_train_x[0])
-
+    
     
     # New classifier Parameters
     
@@ -284,12 +285,12 @@ if __name__ == "__main__":
     best_lr, best_epochs, multiplier, best_net = \
         part2.ClaimClassifierHyperParameterSearch(new_train_x, new_train_y, valid_x, valid_y, varaibles, pricing=True)
 
-    """
+    
     # Evaluate new classifier
     new_classifier.eval()
     new_classifier.evaluate_architecture(test_x, test_y)
     
-    """
+    
     # Evaluate best net
     print("")
     print("Final Model: ")
@@ -307,8 +308,13 @@ if __name__ == "__main__":
 
     # Calculate probabilities and prices
     probs = MyPricing_Model.predict_claim_probability(test_x)
+
+    roc = roc_auc_score(test_y, probs)
+    print("Roc Score on test Data: " + str(roc))
+
     MyPricing_Model.fit(attributes, y, claim_amounts)
     prices = MyPricing_Model.predict_premium(attributes)
+
 
     print(prices)
     print("Saving...")
