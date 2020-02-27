@@ -90,7 +90,7 @@ class ClaimClassifier(T.nn.Module):
                 Y = T.Tensor(local_y)
 
                 # changed from optimizer to net.zero_grad
-                optimizer.zero_grad()
+                self.zero_grad()
 
                 output = self(X)
 

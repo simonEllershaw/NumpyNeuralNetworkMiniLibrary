@@ -106,18 +106,27 @@ class PricingModel():
             x_normed = min_max_scaler.fit_transform(required_attributes,y=None,params)
         """
         # Add extra columns here
+        multiple_binarizers = []
         binarizer = LabelBinarizer()
-        headers = {'drv_sex1', 'vh_type', 'pol_coverage', 'pol_usage'}
 
+
+        headers = {'drv_sex1', 'vh_type', 'pol_coverage', 'pol_usage'}
+        i = 0
         for header in headers:
             data = X_raw[header]
-            binarized = binarizer.fit_transform(data)
+            if training:
+                binarized = binarizer.fit_transform(data)
+                multiple_binarizers.append(binarizer)
+            else:
+                binarized = self.saved_binarizers[i].transform(data)
             if len(binarized[0]) > 1:
                 binarized = binarized[:, :-1]
-
+            i +=1
             binarized = np.asarray(binarized)
-
             total = np.append(x_normed, binarized, axis=1)
+
+        if training:
+            self.saved_binarizers = multiple_binarizers
 
         return total
 
@@ -209,7 +218,6 @@ class PricingModel():
         # =============================================================
         # REMEMBER TO A SIMILAR LINE TO THE FOLLOWING SOMEWHERE IN THE CODE
         X_clean = self._preprocessor(X_raw)
-
         self.base_classifier.eval()
         pred_y, prob_y = self.base_classifier.predict_probabilities(X_clean,pricing=True)
 
@@ -275,7 +283,7 @@ if __name__ == "__main__":
     train_x = pd.DataFrame(train_x)
     train_y = pd.DataFrame(train_y)
 
-    """
+
     # Fit pricing model
     MyPricing_Model.fit(train_x, train_y, claim_amounts)
     probs = MyPricing_Model.predict_claim_probability(test_x)
@@ -289,7 +297,7 @@ if __name__ == "__main__":
     MyPricing_Model.save_model()
     print(MyPricing_Model.means)
     print(MyPricing_Model.std_dev)
-    """
+
 
     # Load Model
     print("Loading...")
