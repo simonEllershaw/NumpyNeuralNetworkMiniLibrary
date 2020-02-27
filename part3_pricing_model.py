@@ -9,7 +9,7 @@ import torch.nn as nn
 from part2_claim_classifier import ClaimClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
-from sklearn.preprocessing import _data
+from sklearn.externals import joblib
 
 
 def fit_and_calibrate_classifier(classifier, X, y):
