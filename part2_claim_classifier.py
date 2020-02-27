@@ -20,8 +20,8 @@ class ClaimClassifier(T.nn.Module):
     def __init__(self, variables=9, multiplier=6):
         super(ClaimClassifier, self).__init__()
         self.multiplier = multiplier
-        self.hid1 = T.nn.Linear(variables, 6 * variables)  # 9-(8-8)-1
-        self.hid2 = T.nn.Linear(6 * variables, variables)
+        self.hid1 = T.nn.Linear(variables, multiplier * variables)  # 9-(8-8)-1
+        self.hid2 = T.nn.Linear(multiplier * variables, variables)
         self.output = T.nn.Linear(variables, 1)
         """
         Feel free to alter this as you wish, adding instance variables as
@@ -214,7 +214,7 @@ def ClaimClassifierHyperParameterSearch(data_x, data_y, test_x, test_y, variable
     The function should return your optimised hyper-parameters.
     """
     max_metric = 0
-    searches = 20
+    searches = 100
 
     for i in range(searches):
         multiplier = round(np.random.uniform(1, 6))
