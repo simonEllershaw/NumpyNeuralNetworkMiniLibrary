@@ -192,7 +192,7 @@ class PricingModel():
         # For example you could scale all your prices down by a factor
         X_raw= self._preprocessor(X_raw)
 
-        premium_factor = 0.9
+        premium_factor = 0.7
 
         premiums = self.predict_claim_probability(X_raw) * self.y_mean * premium_factor
         premiums = np.array(premiums)
@@ -238,11 +238,12 @@ if __name__ == "__main__":
     labels = np.reshape(y, (len(y), 1))
     total = np.append(x_clean, labels, axis=1)
 
+
     # Shuffle data and split
     X, Y = shuffle(x_clean, labels)
     train_x, test_x, train_y, test_y = train_test_split(X, Y, test_size=0.3)
     valid_x, test_x, valid_y, test_y = train_test_split(train_x, train_y, test_size=0.5)
-
+    """
     # Up sample
     (unique, counts) = np.unique(train_y, return_counts=True)
     total_train = np.append(train_x,train_y, axis=1)
@@ -262,7 +263,7 @@ if __name__ == "__main__":
     (unique, counts) = np.unique(new_train_y, return_counts=True)
     varaibles = len(new_train_x[0])
 
-    """
+    
     # New classifier Parameters
     
     multiplier = 4
@@ -277,17 +278,16 @@ if __name__ == "__main__":
 
     # Fit new classifier
     new_classifier.fit(new_train_x, new_train_y, learning,criterion,optimiser,epochs,batch_size)
-    """
 
     best_lr, best_epochs, multiplier, best_net = \
         part2.ClaimClassifierHyperParameterSearch(new_train_x, new_train_y, valid_x, valid_y, varaibles, pricing=True)
 
-    """
+    
     # Evaluate new classifier
     new_classifier.eval()
     new_classifier.evaluate_architecture(test_x, test_y)
     """
-
+    """
     # Evaluate best net
     print("")
     print("Final Model: ")
@@ -297,10 +297,10 @@ if __name__ == "__main__":
 
     # Set classifier for Model
     MyPricing_Model.base_classifier = best_net
-
+    """
 
     # If not calculating from beginning
-    #MyPricing_Model = load_model()
+    MyPricing_Model = load_model()
     ####################
 
     # Calculate probabilities and prices
@@ -308,8 +308,7 @@ if __name__ == "__main__":
     MyPricing_Model.fit(attributes, y, claim_amounts)
     prices = MyPricing_Model.predict_premium(attributes)
 
+    print(prices)
     print("Saving...")
-    MyPricing_Model.save_model()
+    #MyPricing_Model.save_model()
 
-    loaded_pricing_model = PricingModel()
-    loaded_pricing_model = load_model()
