@@ -50,7 +50,7 @@ class PricingModel():
         self.base_classifier = ClaimClassifier()  # ADD YOUR BASE CLASSIFIER HERE
 
     # YOU ARE ALLOWED TO ADD MORE ARGUMENTS AS NECESSARY TO THE _preprocessor METHOD
-    def _preprocessor(self, X_raw):
+    def _preprocessor(self, X_raw, testing = False):
         """Data preprocessing function.
 
         This function prepares the features of the data for training,
@@ -79,10 +79,16 @@ class PricingModel():
         #  drv_age2
 
         required_attributes = X_raw[part2_headers]
+        min_max_scaler = preprocessing.MinMaxScaler()
+
 
         # Use min/max normalisation
-        min_max_scaler = preprocessing.MinMaxScaler()
-        x_normed = min_max_scaler.fit_transform(required_attributes)
+        if not testing:
+            x_normed = min_max_scaler.fit_transform(required_attributes)
+            self.normalisation = min_max_scaler.get_params()
+        else:
+            min_max_scaler.set_params(self.normalisation)
+            min_max_scaler.transform(required_attributes)
 
         return x_normed
 
@@ -141,7 +147,7 @@ class PricingModel():
         # =============================================================
         # REMEMBER TO A SIMILAR LINE TO THE FOLLOWING SOMEWHERE IN THE CODE
         # X_clean = self._preprocessor(X_raw)
-        X_raw = pd.DataFrame(X_raw)
+        X_raw = pd.DataFrame(X_raw,testing=True)
         labels, probabilities = self.base_classifier.predict_probabilities(X_raw)
 
         return probabilities
@@ -168,7 +174,7 @@ class PricingModel():
         # For example you could scale all your prices down by a factor
         X_raw= self._preprocessor(X_raw)
 
-        premium_factor = 1.1
+        premium_factor = 0.9
 
         premiums = self.predict_claim_probability(X_raw) * self.y_mean * premium_factor
         premiums = np.array(premiums)
@@ -209,6 +215,9 @@ if __name__ == "__main__":
     MyPricing_Model = PricingModel()
     x_clean = MyPricing_Model._preprocessor(attributes)
 
+
+
+    """
     # Join data
     y = list(y)
     labels = np.reshape(y, (len(y), 1))
@@ -273,7 +282,8 @@ if __name__ == "__main__":
     # If not calculating from beginning
     MyPricing_Model = load_model()
     ####################
-
+    
+    
     probs = MyPricing_Model.predict_claim_probability(test_x)
     MyPricing_Model.fit(attributes, y, claim_amounts)
     prices = MyPricing_Model.predict_premium(attributes)
@@ -282,3 +292,4 @@ if __name__ == "__main__":
 
     print("Saving...")
     MyPricing_Model.save_model()
+    """
