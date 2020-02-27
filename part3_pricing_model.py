@@ -246,7 +246,7 @@ if __name__ == "__main__":
     X, Y = shuffle(x_clean, labels)
     train_x, test_x, train_y, test_y = train_test_split(X, Y, test_size=0.3)
     valid_x, test_x, valid_y, test_y = train_test_split(train_x, train_y, test_size=0.5)
-
+    """
     # Up sample
     (unique, counts) = np.unique(train_y, return_counts=True)
     total_train = np.append(train_x,train_y, axis=1)
@@ -300,10 +300,10 @@ if __name__ == "__main__":
 
     # Set classifier for Model
     MyPricing_Model.base_classifier = best_net
-
+    """
 
     # If not calculating from beginning
-    #MyPricing_Model = load_model()
+    MyPricing_Model = load_model()
     ####################
 
     # Calculate probabilities and prices
@@ -314,7 +314,6 @@ if __name__ == "__main__":
 
     MyPricing_Model.fit(attributes, y, claim_amounts)
     prices = MyPricing_Model.predict_premium(attributes)
-
 
     print(prices)
     print("Saving...")
