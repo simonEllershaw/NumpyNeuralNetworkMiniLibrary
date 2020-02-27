@@ -209,12 +209,9 @@ class PricingModel():
         # =============================================================
         # REMEMBER TO A SIMILAR LINE TO THE FOLLOWING SOMEWHERE IN THE CODE
         X_clean = self._preprocessor(X_raw)
-        inputs = torch.Tensor(X_clean)
-        best_classifier = ClaimClassifier()
-        best_classifier = self.base_classifier
-        best_classifier.eval()
-        output = best_classifier(inputs)
-        prob_y = output.detach().numpy()
+
+        self.base_classifier.eval()
+        pred_y, prob_y = self.base_classifier.predict_probabilities(X_clean,pricing=True)
 
         return prob_y
 
@@ -238,8 +235,7 @@ class PricingModel():
         # =============================================================
         # REMEMBER TO INCLUDE ANY PRICING STRATEGY HERE.
         # For example you could scale all your prices down by a factor
-        premium_factor = 0.8
-
+        premium_factor = 0.9
         premiums = self.predict_claim_probability(X_raw) * self.y_mean * premium_factor
         premiums = np.array(premiums)
         premiums = premiums.flatten()
@@ -259,6 +255,7 @@ def load_model():
         trained_model = pickle.load(target)
     return trained_model
 
+
 if __name__ == "__main__":
 
     dat = pd.read_csv("part3_training_data.csv")
@@ -271,12 +268,14 @@ if __name__ == "__main__":
     MyPricing_Model = PricingModel()
 
     # Shuffle data and split
+    X, Y = attributes, y
     X, Y = shuffle(attributes, y)
 
     train_x, test_x, train_y, test_y = train_test_split(X, Y, test_size=0.15)
     train_x = pd.DataFrame(train_x)
     train_y = pd.DataFrame(train_y)
 
+    """
     # Fit pricing model
     MyPricing_Model.fit(train_x, train_y, claim_amounts)
     probs = MyPricing_Model.predict_claim_probability(test_x)
@@ -284,19 +283,22 @@ if __name__ == "__main__":
     print("Roc Score on test Data: " + str(roc))
     prices = MyPricing_Model.predict_premium(attributes)
     print(prices)
-
+    
     # Save Model
     print("Saving...")
     MyPricing_Model.save_model()
-
+    print(MyPricing_Model.means)
+    print(MyPricing_Model.std_dev)
+    """
 
     # Load Model
     print("Loading...")
     loaded_model = load_model()
-
+    print(loaded_model.means)
+    print(loaded_model.std_dev)
     # predict with loaded
     loaded_probs = loaded_model.predict_claim_probability(test_x)
-    roc = roc_auc_score(test_y,loaded_probs)
+    roc = roc_auc_score(test_y, loaded_probs)
     print("Roc Score on test Data: " + str(roc))
 
 

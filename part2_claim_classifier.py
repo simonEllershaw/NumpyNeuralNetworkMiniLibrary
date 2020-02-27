@@ -19,6 +19,7 @@ class ClaimClassifier(T.nn.Module):
 
     def __init__(self, variables=9, multiplier=6):
         super(ClaimClassifier, self).__init__()
+        self.multiplier = multiplier
         self.hid1 = T.nn.Linear(variables, 6 * variables)  # 9-(8-8)-1
         self.hid2 = T.nn.Linear(6 * variables, variables)
         self.output = T.nn.Linear(variables, 1)
@@ -159,7 +160,7 @@ class ClaimClassifier(T.nn.Module):
         with open('part2_claim_classifier.pickle', 'wb') as target:
             pickle.dump(model, target)
 
-    def predict_probabilities(self, X_raw):
+    def predict_probabilities(self, X_raw, pricing=False):
         """Classifier probability prediction function.
 
         Here you will implement the predict function for your classifier.
@@ -176,7 +177,11 @@ class ClaimClassifier(T.nn.Module):
             values corresponding to the probability of beloning to the
             POSITIVE class (that had accidents)
         """
-        X_clean = self._preprocessor(X_raw)
+        if not pricing:
+            X_clean = self._preprocessor(X_raw)
+        else:
+            X_clean = X_raw
+
         X = T.Tensor(X_clean)
         oupt = self(X)
         pred_y = oupt >= 0.5
@@ -208,7 +213,7 @@ def ClaimClassifierHyperParameterSearch(data_x, data_y, test_x, test_y, variable
     The function should return your optimised hyper-parameters.
     """
     max_metric = 0
-    searches = 2
+    searches = 20
 
     for i in range(searches):
         multiplier = round(np.random.uniform(1, 6))
@@ -217,6 +222,7 @@ def ClaimClassifierHyperParameterSearch(data_x, data_y, test_x, test_y, variable
 
         loss = T.nn.BCELoss()
         no_batches = len(data_x)
+
         epochs = round(np.random.uniform(50, 150))
         new_net.train()
         optimizer = T.optim.Adam(new_net.parameters(), lr=lrn_rate)
