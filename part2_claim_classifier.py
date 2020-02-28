@@ -328,7 +328,6 @@ if __name__ == "__main__":
 
     create_heatmap(heatmap_data(train_x, train_y, val_x, val_y))
 
-    """
     # UPSAMPLING
     z = np.copy(all_train_data)
     while (counts[0] > counts[1]):
@@ -358,16 +357,16 @@ if __name__ == "__main__":
 
     # 4. evaluate model
     net = net.eval()  # set eval mode
-    """
+
     # # # # # # # # # # TESTING ON UNSEEN DATA # # # # # # # # # # # # # # # #
     trained_model = load_model()
     trained_model.eval()
     auc = trained_model.evaluate_architecture(test_x, test_y)
     print("AUC on test data = %0.2f%%" % auc)
 
-    """
+
     best_net.eval()
     auc = best_net.evaluate_architecture(test_x, test_y)
     print("AUC on test data = %0.2f%%" % auc)
     # 5. save model
-    """
+
