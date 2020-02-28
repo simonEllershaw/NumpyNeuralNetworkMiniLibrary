@@ -35,7 +35,7 @@ class ClaimClassifier(T.nn.Module):
         z = T.sigmoid(self.output(z))
         return z
 
-    def _preprocessor(self, X_raw):
+    def _preprocessor(self, X_raw, training=False):
         """Data preprocessing function.
 
         This function prepares the features of the data for training,
@@ -52,9 +52,13 @@ class ClaimClassifier(T.nn.Module):
             A clean data set that is used for training and prediction.
         """
         # YOUR CODE HERE
-        X_raw.to_numpy()
-        min_max_scaler = preprocessing.MinMaxScaler()
-        X_normed = min_max_scaler.fit_transform(X_raw)
+        X_raw=X_raw.to_numpy()
+
+        if training:
+            self.min = np.min(X_raw, axis=0)
+            self.max = np.max(X_raw, axis=0)
+
+        X_normed = (X_raw - self.min) / (self.max-self.min)
 
         return X_normed  # YOUR CLEAN DATA AS A NUMPY ARRAY
 
@@ -205,7 +209,7 @@ def load_model():
 
 
 # ENSURE TO ADD IN WHATEVER INPUTS YOU DEEM NECESSARRY TO THIS FUNCTION
-def ClaimClassifierHyperParameterSearch(data_x, data_y, test_x, test_y, variables=9, pricing=False):
+def ClaimClassifierHyperParameterSearch(data_x, data_y, test_x, test_y, variables=9,pricing=False):
     """Performs a hyper-parameter for fine-tuning the classifier.
 
     Implement a function that performs a hyper-parameter search for your
@@ -214,7 +218,7 @@ def ClaimClassifierHyperParameterSearch(data_x, data_y, test_x, test_y, variable
     The function should return your optimised hyper-parameters.
     """
     max_metric = 0
-    searches = 2
+    searches = 100
 
     for i in range(searches):
         multiplier = round(np.random.uniform(1, 15))
@@ -226,6 +230,8 @@ def ClaimClassifierHyperParameterSearch(data_x, data_y, test_x, test_y, variable
 
         epochs = round(np.random.uniform(50, 150))
         new_net.train()
+        new_net.min = np.min(data_x, axis=0)
+        new_net.max = np.max(data_x, axis=0)
         optimizer = T.optim.Adam(new_net.parameters(), lr=lrn_rate)
         new_net.fit(data_x, data_y, loss, optimizer, epochs, no_batches)
 
@@ -257,7 +263,7 @@ if __name__ == "__main__":
     x_data = pd.DataFrame(data=x_data)
     net = ClaimClassifier()
 
-    x_data = net._preprocessor(x_data)
+    x_data = net._preprocessor(x_data,True)
 
     # Splitting data into 70% training, 15% validation, 15% test
     train_ratio = round(len(x_data) * 0.7)
@@ -271,7 +277,7 @@ if __name__ == "__main__":
     (unique, counts) = np.unique(train_y, return_counts=True)
     np.random.shuffle(all_train_data)
     counter = 0
-    """
+
     # UPSAMPLING
     z = np.copy(all_train_data)
     while (counts[0] > counts[1]):
@@ -286,7 +292,7 @@ if __name__ == "__main__":
     np.random.shuffle(z)
     new_train_x = z[:, :9]
     new_train_y = z[:, 9:]
-
+    #
     # Hyperparameter search
     best_lr, best_epochs, multiplier, best_net = \
         ClaimClassifierHyperParameterSearch(new_train_x, new_train_y, val_x, val_y)
@@ -301,16 +307,16 @@ if __name__ == "__main__":
 
     # 4. evaluate model
     net = net.eval()  # set eval mode
-    """
+
     # # # # # # # # # # TESTING ON UNSEEN DATA # # # # # # # # # # # # # # # #
     trained_model = load_model()
     trained_model.eval()
     auc = trained_model.evaluate_architecture(test_x, test_y)
     print("AUC on test data = %0.2f%%" % auc)
 
-    """
+
     best_net.eval()
     auc = best_net.evaluate_architecture(test_x, test_y)
     print("AUC on test data = %0.2f%%" % auc)
     # 5. save model
-    """
+
