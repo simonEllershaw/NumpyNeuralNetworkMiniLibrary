@@ -73,7 +73,7 @@ class PricingModel():
         # Load simple data set used in part 2
         part2_headers = {"drv_age1", 'vh_age', 'vh_cyl', 'vh_din', 'pol_bonus', 'vh_sale_begin', 'vh_sale_end',
                          'vh_value', 'vh_speed','drv_age_lic1','pol_duration','pol_sit_duration','drv_age2'}
-        # added from before
+        #  added from before
         # 'drv_age_lic1'
         #  pol_duration
         #  pol_sit_duration
@@ -154,7 +154,7 @@ class PricingModel():
         self.y_mean = np.mean(claims_raw[nnz])
         # =============================================================
         # REMEMBER TO A SIMILAR LINE TO THE FOLLOWING SOMEWHERE IN THE CODE
-        X_clean = self._preprocessor(X_raw,training=True)
+        X_clean = self._preprocessor(X_raw, training=True)
 
         #Split into training/Validation
         training_x, validation_x, training_y, validation_y = train_test_split(X_clean, y_raw, test_size=0.2)
@@ -176,7 +176,7 @@ class PricingModel():
         new_train_x = total_train[:, :-1]
         new_train_y = np.expand_dims(new_train_y, 1)
 
-        (unique, counts) = np.unique(new_train_y, return_counts=True)
+        #(unique, counts) = np.unique(new_train_y, return_counts=True)
         varaibles = len(new_train_x[0])
 
         validation_x = np.array(validation_x)
@@ -186,8 +186,9 @@ class PricingModel():
         best_lr, best_epochs, multiplier, best_net = \
             part2.ClaimClassifierHyperParameterSearch(new_train_x, new_train_y, validation_x, validation_y, varaibles,
                                                       pricing=True)
-
-
+        print("Best lr = " + str(best_lr))
+        print("Best epochs = " + str(best_epochs))
+        print("Multiplier = " + str(multiplier))
 
         # THE FOLLOWING GETS CALLED IF YOU WISH TO CALIBRATE YOUR PROBABILITES
         if self.calibrate:
@@ -217,9 +218,16 @@ class PricingModel():
         """
         # =============================================================
         # REMEMBER TO A SIMILAR LINE TO THE FOLLOWING SOMEWHERE IN THE CODE
-        X_clean = self._preprocessor(X_raw)
+        copyOfData = X_raw
+        X_clean = self._preprocessor(copyOfData)
+
         self.base_classifier.eval()
-        pred_y, prob_y = self.base_classifier.predict_probabilities(X_clean,pricing=True)
+        X = torch.Tensor(X_clean)
+
+        oupt = self.base_classifier(X)
+        prob_y = oupt.detach().numpy()
+
+        #pred_y, prob_y = self.base_classifier.predict_probabilities(X_clean, pricing=True)
 
         return prob_y
 
@@ -277,34 +285,39 @@ if __name__ == "__main__":
 
     # Shuffle data and split
     X, Y = attributes, y
-    X, Y = shuffle(attributes, y)
 
-    train_x, test_x, train_y, test_y = train_test_split(X, Y, test_size=0.15)
+    train_x, test_x, train_y, test_y = train_test_split(X, Y, test_size=0.15, random_state=42)
     train_x = pd.DataFrame(train_x)
     train_y = pd.DataFrame(train_y)
 
 
-    # Fit pricing model
-    MyPricing_Model.fit(train_x, train_y, claim_amounts)
-    probs = MyPricing_Model.predict_claim_probability(test_x)
-    roc = roc_auc_score(test_y, probs)
-    print("Roc Score on test Data: " + str(roc))
-    prices = MyPricing_Model.predict_premium(attributes)
-    print(prices)
-    
-    
+
+    # # Fit pricing model
+    # MyPricing_Model.fit(train_x, train_y, claim_amounts)
+    # temp = test_x
+    # probs = MyPricing_Model.predict_claim_probability(test_x)
+    # test = (temp == test_x)
+    # roc = roc_auc_score(test_y, probs)
+    # print("Roc Score on test Data: " + str(roc))
+    # prices = MyPricing_Model.predict_premium(attributes)
+    # print(prices)
+
     # Save Model
     print("Saving...")
-    MyPricing_Model.save_model()
-    print(MyPricing_Model.means)
-    print(MyPricing_Model.std_dev)
+    #MyPricing_Model.save_model()
 
 
     # Load Model
     print("Loading...")
     loaded_model = load_model()
-    print(loaded_model.means)
-    print(loaded_model.std_dev)
+    print(loaded_model.means, test_x)
+    # predict with loaded
+    loaded_probs = loaded_model.predict_claim_probability(test_x)
+    roc = roc_auc_score(test_y, loaded_probs)
+    print("Roc Score on test Data: " + str(roc))
+    # Load Model
+    print("Loading...")
+    loaded_model = load_model()
     # predict with loaded
     loaded_probs = loaded_model.predict_claim_probability(test_x)
     roc = roc_auc_score(test_y, loaded_probs)
@@ -354,10 +367,3 @@ if __name__ == "__main__":
     #print(MyPricing_Model.base_classifier)
     # Calculate probabilities and prices
     """
-
-
-
-
-
-
-

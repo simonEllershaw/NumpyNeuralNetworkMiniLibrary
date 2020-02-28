@@ -161,7 +161,7 @@ class ClaimClassifier(T.nn.Module):
         with open('part2_claim_classifier.pickle', 'wb') as target:
             pickle.dump(model, target)
 
-    def predict_probabilities(self, X_raw, pricing=False):
+    def predict_probabilities(self, X_raw, pricing = False):
         """Classifier probability prediction function.
 
         Here you will implement the predict function for your classifier.
@@ -214,10 +214,10 @@ def ClaimClassifierHyperParameterSearch(data_x, data_y, test_x, test_y, variable
     The function should return your optimised hyper-parameters.
     """
     max_metric = 0
-    searches = 100
+    searches = 2
 
     for i in range(searches):
-        multiplier = round(np.random.uniform(1, 6))
+        multiplier = round(np.random.uniform(1, 15))
         new_net = ClaimClassifier(variables=variables, multiplier=multiplier)
         lrn_rate = np.random.uniform(0.0001, 0.15)
 
@@ -271,7 +271,7 @@ if __name__ == "__main__":
     (unique, counts) = np.unique(train_y, return_counts=True)
     np.random.shuffle(all_train_data)
     counter = 0
-
+    """
     # UPSAMPLING
     z = np.copy(all_train_data)
     while (counts[0] > counts[1]):
@@ -301,17 +301,16 @@ if __name__ == "__main__":
 
     # 4. evaluate model
     net = net.eval()  # set eval mode
-
+    """
     # # # # # # # # # # TESTING ON UNSEEN DATA # # # # # # # # # # # # # # # #
     trained_model = load_model()
     trained_model.eval()
     auc = trained_model.evaluate_architecture(test_x, test_y)
     print("AUC on test data = %0.2f%%" % auc)
 
+    """
     best_net.eval()
     auc = best_net.evaluate_architecture(test_x, test_y)
     print("AUC on test data = %0.2f%%" % auc)
     # 5. save model
-    output_test = pd.DataFrame(test_x)
-    output = best_net.predict(output_test)
-
+    """
