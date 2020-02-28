@@ -307,14 +307,14 @@ if __name__ == "__main__":
 
     # 4. evaluate model
     net = net.eval()  # set eval mode
-    """
+
     # # # # # # # # # # TESTING ON UNSEEN DATA # # # # # # # # # # # # # # # #
     trained_model = load_model()
     trained_model.eval()
     auc = trained_model.evaluate_architecture(test_x, test_y)
     print("AUC on test data = %0.2f%%" % auc)
 
-    """
+
     best_net.eval()
     auc = best_net.evaluate_architecture(test_x, test_y)
     print("AUC on test data = %0.2f%%" % auc)
