@@ -276,6 +276,8 @@ def heatmap_data(data_x, data_y, test_x, test_y, variables = 9):
         for j in range(searches):
 
             new_net = ClaimClassifier(variables=variables, multiplier=multiplier)
+            new_net.min = np.min(data_x, axis=0)
+            new_net.max = np.max(data_x, axis=0)
             loss = T.nn.BCELoss()
             no_batches = len(data_x)
 
