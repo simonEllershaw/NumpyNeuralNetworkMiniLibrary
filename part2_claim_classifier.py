@@ -245,10 +245,55 @@ def ClaimClassifierHyperParameterSearch(data_x, data_y, test_x, test_y, variable
     return best_lr, max_epochs, best_multiplier, best_net
 
 
+def create_heatmap(data):
+    import plotly.graph_objects as go
+
+    data = np.array(data)
+    x = np.unique(data[:,0])
+    y = np.unique(data[:,1])
+    z = data[:,-1]
+    z = np.reshape(z, (len(x), len(y)))
+    fig = go.Figure(data=go.Heatmap(z=z, x=x, y=y))
+    fig.show()
+
+
+def heatmap_data(data_x, data_y, test_x, test_y, variables = 9):
+    data_for_graph = []
+
+
+    multiplier = 1
+    lrn_rate = 0.001
+    # constants
+    epochs = 50
+    searches = 20
+    for i in range(searches):
+        for j in range(searches):
+
+            new_net = ClaimClassifier(variables=variables, multiplier=multiplier)
+            loss = T.nn.BCELoss()
+            no_batches = len(data_x)
+
+            new_net.train()
+            optimizer = T.optim.Adam(new_net.parameters(), lr=lrn_rate)
+            new_net.fit(data_x, data_y, loss, optimizer, epochs, no_batches)
+
+            new_net.eval()
+            metric = new_net.evaluate_architecture(test_x, test_y)
+            data_for_graph.append([lrn_rate, multiplier, metric])
+
+            # increment for the map
+            multiplier += 1
+        # increment for the map
+        multiplier = 1
+        lrn_rate += 0.005
+
+    return (data_for_graph)
+
+
+
 if __name__ == "__main__":
 
     # 1. load data
-
     # LOAD FULL FILE
     file = np.loadtxt("part2_training_data.csv", delimiter=',', skiprows=1, dtype=np.float32, ndmin=2)
     np.random.shuffle(file)
@@ -271,6 +316,9 @@ if __name__ == "__main__":
     (unique, counts) = np.unique(train_y, return_counts=True)
     np.random.shuffle(all_train_data)
     counter = 0
+
+    create_heatmap(heatmap_data(train_x, train_y, val_x, val_y))
+
     """
     # UPSAMPLING
     z = np.copy(all_train_data)
@@ -302,11 +350,11 @@ if __name__ == "__main__":
     # 4. evaluate model
     net = net.eval()  # set eval mode
     """
-    # # # # # # # # # # TESTING ON UNSEEN DATA # # # # # # # # # # # # # # # #
-    trained_model = load_model()
-    trained_model.eval()
-    auc = trained_model.evaluate_architecture(test_x, test_y)
-    print("AUC on test data = %0.2f%%" % auc)
+    # # # # # # # # # # # TESTING ON UNSEEN DATA # # # # # # # # # # # # # # # #
+    # trained_model = load_model()
+    # trained_model.eval()
+    # auc = trained_model.evaluate_architecture(test_x, test_y)
+    #print("AUC on test data = %0.2f%%" % auc)
 
     """
     best_net.eval()

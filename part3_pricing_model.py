@@ -293,7 +293,6 @@ def main():
     roc = roc_auc_score(test_y, loaded_probs)
     print("Roc Score on test Data: " + str(roc))
 
-
 if __name__ == "__main__":
     dat = pd.read_csv("part3_training_data.csv")
     attributes = dat.drop(columns=["claim_amount", "made_claim"])
