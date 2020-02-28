@@ -82,7 +82,6 @@ class PricingModel():
         required_attributes = X_raw[part2_headers]
 
         required_attributes = np.array(required_attributes)
-        print(required_attributes)
 
         if training:
             self.means = np.mean(required_attributes, axis=0)
@@ -312,19 +311,19 @@ if __name__ == "__main__":
     train_y = pd.DataFrame(train_y)
 
 
-    # Fit pricing model
-    # MyPricing_Model.fit(train_x, train_y, claim_amounts)
-    # temp = test_x
-    # probs = MyPricing_Model.predict_claim_probability(test_x)
-    # test = (temp == test_x)
-    # roc = roc_auc_score(test_y, probs)
-    # print("Roc Score on test Data: " + str(roc))
-    # prices = MyPricing_Model.predict_premium(attributes)
-    # print(prices)
-    #
-    # #Save Model
-    # print("Saving...")
-    # MyPricing_Model.save_model()
+    #Fit pricing model
+    MyPricing_Model.fit(train_x, train_y, claim_amounts)
+    temp = test_x
+    probs = MyPricing_Model.predict_claim_probability(test_x)
+    test = (temp == test_x)
+    roc = roc_auc_score(test_y, probs)
+    print("Roc Score on test Data: " + str(roc))
+    prices = MyPricing_Model.predict_premium(attributes)
+    print(prices)
+
+    #Save Model
+    print("Saving...")
+    MyPricing_Model.save_model()
 
 
     #Load Model
