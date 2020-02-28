@@ -48,7 +48,7 @@ class PricingModel():
         # If you wish to use the classifier in part 2, you will need
         # to implement a predict_proba for it before use
         # =============================================================
-        self.base_classifier = None  # ADD YOUR BASE CLASSIFIER HERE
+        self.base_classifier = ClaimClassifier()  # ADD YOUR BASE CLASSIFIER HERE
 
     # YOU ARE ALLOWED TO ADD MORE ARGUMENTS AS NECESSARY TO THE _preprocessor METHOD
     def _preprocessor(self, X_raw, training = False):
@@ -71,8 +71,8 @@ class PricingModel():
         # YOUR CODE HERE
 
         # Load simple data set used in part 2
-        part2_headers = {"drv_age1", 'vh_age', 'vh_cyl', 'vh_din', 'pol_bonus', 'vh_sale_begin', 'vh_sale_end',
-                         'vh_value', 'vh_speed','drv_age_lic1','pol_duration','pol_sit_duration','drv_age2'}
+        part2_headers = ["drv_age1", 'vh_age', 'vh_cyl', 'vh_din', 'pol_bonus', 'vh_sale_begin', 'vh_sale_end',
+                         'vh_value', 'vh_speed','drv_age_lic1','pol_duration','pol_sit_duration','drv_age2']
         #  added from before
         # 'drv_age_lic1'
         #  pol_duration
@@ -82,18 +82,19 @@ class PricingModel():
         required_attributes = X_raw[part2_headers]
 
         required_attributes = np.array(required_attributes)
+        print(required_attributes)
 
         if training:
             self.means = np.mean(required_attributes, axis=0)
             self.std_dev = np.std(required_attributes, axis=0)
 
+        x_normed = (required_attributes - self.means) / self.std_dev
         # Apply Normalisation to the data
-        for i in range(len(required_attributes)):
-            for j in range(len(required_attributes[0])):
-                required_attributes[i, j] = required_attributes[i, j] - self.means[j]
-                required_attributes[i, j] = required_attributes[i, j] / self.std_dev[j]
+        # for i in range(len(required_attributes)):
+        #     for j in range(len(required_attributes[0])):
+        #         required_attributes[i, j] = required_attributes[i, j] - self.means[j])/se
+        #         required_attributes[i, j] = required_attributes[i, j] / self.std_dev[j]
 
-        x_normed = required_attributes
 
         """
         # Use min/max normalisation
@@ -110,7 +111,7 @@ class PricingModel():
         binarizer = LabelBinarizer()
 
 
-        headers = {'drv_sex1', 'vh_type', 'pol_coverage', 'pol_usage'}
+        headers = ['drv_sex1', 'vh_type', 'pol_coverage', 'pol_usage']
         i = 0
         for header in headers:
             data = X_raw[header]
@@ -220,13 +221,10 @@ class PricingModel():
         # REMEMBER TO A SIMILAR LINE TO THE FOLLOWING SOMEWHERE IN THE CODE
         copyOfData = X_raw
         X_clean = self._preprocessor(copyOfData)
-
         self.base_classifier.eval()
         X = torch.Tensor(X_clean)
-
         oupt = self.base_classifier(X)
         prob_y = oupt.detach().numpy()
-
         #pred_y, prob_y = self.base_classifier.predict_probabilities(X_clean, pricing=True)
 
         return prob_y
@@ -271,9 +269,32 @@ def load_model():
         trained_model = pickle.load(target)
     return trained_model
 
+def main():
+    dat = pd.read_csv("part3_training_data.csv")
+    attributes = dat.drop(columns=["claim_amount", "made_claim"])
+    y = dat["made_claim"]
+    claim_amounts = dat['claim_amount']
+
+    # Clean data
+
+    #MyPricing_Model = PricingModel()
+
+    # Shuffle data and split
+    X, Y = attributes, y
+
+    train_x, test_x, train_y, test_y = train_test_split(X, Y, test_size=0.15, random_state=42)
+    train_x = pd.DataFrame(train_x)
+    train_y = pd.DataFrame(train_y)
+    # Load Model
+    print("Loading...")
+    loaded_model = load_model()
+    # predict with loaded
+    loaded_probs = loaded_model.predict_claim_probability(test_x)
+    roc = roc_auc_score(test_y, loaded_probs)
+    print("Roc Score on test Data: " + str(roc))
+
 
 if __name__ == "__main__":
-
     dat = pd.read_csv("part3_training_data.csv")
     attributes = dat.drop(columns=["claim_amount", "made_claim"])
     y = dat["made_claim"]
@@ -291,8 +312,7 @@ if __name__ == "__main__":
     train_y = pd.DataFrame(train_y)
 
 
-
-    # # Fit pricing model
+    # Fit pricing model
     # MyPricing_Model.fit(train_x, train_y, claim_amounts)
     # temp = test_x
     # probs = MyPricing_Model.predict_claim_probability(test_x)
@@ -301,21 +321,13 @@ if __name__ == "__main__":
     # print("Roc Score on test Data: " + str(roc))
     # prices = MyPricing_Model.predict_premium(attributes)
     # print(prices)
+    #
+    # #Save Model
+    # print("Saving...")
+    # MyPricing_Model.save_model()
 
-    # Save Model
-    print("Saving...")
-    #MyPricing_Model.save_model()
 
-
-    # Load Model
-    print("Loading...")
-    loaded_model = load_model()
-    print(loaded_model.means, test_x)
-    # predict with loaded
-    loaded_probs = loaded_model.predict_claim_probability(test_x)
-    roc = roc_auc_score(test_y, loaded_probs)
-    print("Roc Score on test Data: " + str(roc))
-    # Load Model
+    #Load Model
     print("Loading...")
     loaded_model = load_model()
     # predict with loaded
