@@ -88,27 +88,10 @@ class PricingModel():
             self.std_dev = np.std(required_attributes, axis=0)
 
         x_normed = (required_attributes - self.means) / self.std_dev
-        # Apply Normalisation to the data
-        # for i in range(len(required_attributes)):
-        #     for j in range(len(required_attributes[0])):
-        #         required_attributes[i, j] = required_attributes[i, j] - self.means[j])/se
-        #         required_attributes[i, j] = required_attributes[i, j] / self.std_dev[j]
 
-
-        """
-        # Use min/max normalisation
-        if training:
-            x_normed = min_max_scaler.fit_transform(required_attributes)
-            self.normalisation = min_max_scaler.get_params()
-
-        else:
-            params = self.normalisation
-            x_normed = min_max_scaler.fit_transform(required_attributes,y=None,params)
-        """
         # Add extra columns here
         multiple_binarizers = []
         binarizer = LabelBinarizer()
-
 
         headers = ['drv_sex1', 'vh_type', 'pol_coverage', 'pol_usage']
         i = 0
@@ -248,7 +231,7 @@ class PricingModel():
         # =============================================================
         # REMEMBER TO INCLUDE ANY PRICING STRATEGY HERE.
         # For example you could scale all your prices down by a factor
-        premium_factor = 0.3
+        premium_factor = 0.25
         premiums = self.predict_claim_probability(X_raw) * self.y_mean * premium_factor
         premiums = np.array(premiums)
         premiums = premiums.flatten()
@@ -300,17 +283,14 @@ if __name__ == "__main__":
     claim_amounts = dat['claim_amount']
 
     # Clean data
-
     MyPricing_Model = PricingModel()
-
     # Shuffle data and split
     X, Y = attributes, y
 
     train_x, test_x, train_y, test_y = train_test_split(X, Y, test_size=0.15, random_state=42)
     train_x = pd.DataFrame(train_x)
     train_y = pd.DataFrame(train_y)
-
-
+    """
     #Fit pricing model
     MyPricing_Model.fit(train_x, train_y, claim_amounts)
     temp = test_x
@@ -324,8 +304,7 @@ if __name__ == "__main__":
     #Save Model
     print("Saving...")
     MyPricing_Model.save_model()
-
-
+    """
     #Load Model
     print("Loading...")
     loaded_model = load_model()
@@ -333,48 +312,3 @@ if __name__ == "__main__":
     loaded_probs = loaded_model.predict_claim_probability(test_x)
     roc = roc_auc_score(test_y, loaded_probs)
     print("Roc Score on test Data: " + str(roc))
-
-
-
-    """
-    # New classifier Parameters
-    
-    multiplier = 4
-    new_classifier = ClaimClassifier(variables=varaibles, multiplier=multiplier)
-    new_classifier.train()
-    learning = 0.002
-    epochs = 124
-    batch_size = len(new_train_x)
-    criterion = nn.BCELoss()
-    optimiser = torch.optim.Adam(new_classifier.parameters(), lr=learning)
-
-
-    # Fit new classifier
-    new_classifier.fit(new_train_x, new_train_y,criterion,optimiser,epochs,batch_size)
-
-    best_lr, best_epochs, multiplier, best_net = \
-        part2.ClaimClassifierHyperParameterSearch(new_train_x, new_train_y, valid_x, valid_y, varaibles, pricing=True)
-
-    
-    # Evaluate new classifier
-    new_classifier.eval()
-    new_classifier.evaluate_architecture(test_x, test_y)
-    
-    
-    # Evaluate best net
-    print("")
-    print("Final Model: ")
-
-    best_net.eval()
-    best_net.evaluate_architecture(test_x, test_y)
-
-    # Set classifier for Model
-    MyPricing_Model.base_classifier = best_net
-    
-
-    # If not calculating from beginning
-
-    ####################
-    #print(MyPricing_Model.base_classifier)
-    # Calculate probabilities and prices
-    """
