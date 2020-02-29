@@ -17,12 +17,16 @@ import pandas as pd
 
 class ClaimClassifier(T.nn.Module):
 
-    def __init__(self, variables=9, multiplier=6):
+    def __init__(self, variables=9, multiplier=6, linear = True):
         super(ClaimClassifier, self).__init__()
-        self.multiplier = multiplier
-        self.hid1 = T.nn.Linear(variables, multiplier * variables)  # 9-(8-8)-1
-        self.hid2 = T.nn.Linear(multiplier * variables, variables)
-        self.output = T.nn.Linear(variables, 1)
+        self.linear = linear
+        if self.linear:
+            self.linear = T.nn.Linear(variables, 1)
+        else:
+            self.multiplier = multiplier
+            self.hid1 = T.nn.Linear(variables, multiplier * variables)  # 9-(8-8)-1
+            self.hid2 = T.nn.Linear(multiplier * variables, variables)
+            self.output = T.nn.Linear(variables, 1)
         """
         Feel free to alter this as you wish, adding instance variables as
         necessary. 
@@ -30,9 +34,12 @@ class ClaimClassifier(T.nn.Module):
         pass
 
     def forward(self, x):
-        z = T.tanh(self.hid1(x))
-        z = T.tanh(self.hid2(z))
-        z = T.sigmoid(self.output(z))
+        if self.linear:
+            z = T.sigmoid(self.linear(x))
+        else:
+            z = T.tanh(self.hid1(x))
+            z = T.tanh(self.hid2(z))
+            z = T.sigmoid(self.output(z))
         return z
 
     def _preprocessor(self, X_raw, training=False):

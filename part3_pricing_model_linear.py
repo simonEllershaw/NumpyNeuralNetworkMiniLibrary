@@ -2,13 +2,14 @@ from sklearn.calibration import CalibratedClassifierCV
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.metrics import roc_auc_score
+from part2_claim_classifier import ClaimClassifier
 import torch
 import torch.nn as nn
 from torch import optim
 import pandas as pd
-from torch.nn import functional as F
 import pickle
 import numpy as np
+
 
 
 def fit_and_calibrate_classifier(classifier, X, y):
@@ -47,7 +48,7 @@ class PricingModelLinear():
         # If you wish to use the classifier in part 2, you will need
         # to implement a predict_proba for it before use
         # =============================================================
-        self.base_classifier = LinearClaimClassifier()
+        self.base_classifier = ClaimClassifier()
 
     # YOU ARE ALLOWED TO ADD MORE ARGUMENTS AS NECESSARY TO THE _preprocessor METHOD
     def _preprocessor(self, X_raw, training = False):
@@ -255,7 +256,7 @@ def find_best_model(x_clean,y_raw, variables=9, pricing=False):
     searches = 100
 
     for i in range(searches):
-        new_net = LinearClaimClassifier(variables=len(train_x[0]))
+        new_net = ClaimClassifier(variables=len(train_x[0]),linear=True)
         lrn_rate = np.random.uniform(0.0001, 1)
         loss = nn.BCELoss()
         epochs = round(np.random.uniform(50, 150))
@@ -277,7 +278,7 @@ def find_best_model(x_clean,y_raw, variables=9, pricing=False):
 
         new_net.eval()
         print("Model (" + str(i + 1) + ") out of " + str(searches))
-        probabilities = new_net.predict(valid_x)
+        pred, probabilities = new_net.predict_probabilities(valid_x,pricing=True)
         metric = roc_auc_score(valid_y, probabilities)
         print("Roc Score:" + str(metric))
         if metric > max_metric:
