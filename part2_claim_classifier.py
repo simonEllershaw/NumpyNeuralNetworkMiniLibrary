@@ -333,7 +333,7 @@ if __name__ == "__main__":
     np.random.shuffle(all_train_data)
     counter = 0
 
-    create_heatmap(heatmap_data(train_x, train_y, val_x, val_y))
+    #create_heatmap(heatmap_data(train_x, train_y, val_x, val_y))
 
     # UPSAMPLING
     z = np.copy(all_train_data)

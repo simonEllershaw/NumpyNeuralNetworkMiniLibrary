@@ -290,7 +290,7 @@ if __name__ == "__main__":
     train_x, test_x, train_y, test_y = train_test_split(X, Y, test_size=0.15, random_state=42)
     train_x = pd.DataFrame(train_x)
     train_y = pd.DataFrame(train_y)
-    """
+
     #Fit pricing model
     MyPricing_Model.fit(train_x, train_y, claim_amounts)
     temp = test_x
@@ -304,7 +304,7 @@ if __name__ == "__main__":
     #Save Model
     print("Saving...")
     MyPricing_Model.save_model()
-    """
+
     #Load Model
     print("Loading...")
     loaded_model = load_model()
