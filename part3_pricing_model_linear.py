@@ -252,7 +252,7 @@ def find_best_model(x_clean,y_raw, variables=9, pricing=False):
     new_train_x = total_train[:, :-1]
     new_train_y = np.expand_dims(new_train_y, 1)
     max_metric = 0
-    searches = 5
+    searches = 100
 
     for i in range(searches):
         new_net = LinearClaimClassifier(variables=len(train_x[0]))
