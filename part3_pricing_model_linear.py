@@ -193,9 +193,12 @@ class PricingModelLinear():
         # REMEMBER TO INCLUDE ANY PRICING STRATEGY HERE.
         # For example you could scale all your prices down by a factor
 
-        premium_factor = 0.9
+        premium_factor = 0.25
+        premiums = self.predict_claim_probability(X_raw) * self.y_mean * premium_factor
+        premiums = np.array(premiums)
+        premiums = premiums.flatten()
 
-        return self.predict_claim_probability(X_raw) * self.y_mean
+        return premiums
 
     def save_model(self):
         """Saves the class instance as a pickle file."""

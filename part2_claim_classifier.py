@@ -17,7 +17,7 @@ import pandas as pd
 
 class ClaimClassifier(T.nn.Module):
 
-    def __init__(self, variables=9, multiplier=6, linear = True):
+    def __init__(self, variables=9, multiplier=6, linear = False):
         super(ClaimClassifier, self).__init__()
         self.linear = linear
         if self.linear:
