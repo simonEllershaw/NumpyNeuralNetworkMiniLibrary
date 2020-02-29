@@ -168,7 +168,7 @@ class PricingModelLinear():
         # =============================================================
         # REMEMBER TO A SIMILAR LINE TO THE FOLLOWING SOMEWHERE IN THE CODE
         X_clean = self._preprocessor(X_raw)
-        prob_y = self.base_classifier.predict(X_clean)
+        pred, prob_y = self.base_classifier.predict_probabilities(X_clean,pricing=True)
 
         return prob_y
 
