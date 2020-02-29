@@ -168,7 +168,7 @@ class PricingModelLinear():
         # =============================================================
         # REMEMBER TO A SIMILAR LINE TO THE FOLLOWING SOMEWHERE IN THE CODE
         X_clean = self._preprocessor(X_raw)
-        pred, prob_y = self.base_classifier.predict_probabilities(X_clean,pricing=True)
+        pred, prob_y = self.base_classifier.predict_probabilities(X_clean, pricing=True)
 
         return prob_y
 
@@ -253,7 +253,7 @@ def find_best_model(x_clean,y_raw, variables=9, pricing=False):
     new_train_x = total_train[:, :-1]
     new_train_y = np.expand_dims(new_train_y, 1)
     max_metric = 0
-    searches = 100
+    searches = 10
 
     for i in range(searches):
         new_net = ClaimClassifier(variables=len(train_x[0]),linear=True)
