@@ -225,7 +225,7 @@ def ClaimClassifierHyperParameterSearch(data_x, data_y, test_x, test_y, variable
     The function should return your optimised hyper-parameters.
     """
     max_metric = 0
-    searches = 100
+    searches = 10
 
     for i in range(searches):
         multiplier = round(np.random.uniform(1, 15))
