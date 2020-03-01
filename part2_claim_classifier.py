@@ -230,7 +230,7 @@ def ClaimClassifierHyperParameterSearch(data_x, data_y, test_x, test_y, variable
     for i in range(searches):
         multiplier = round(np.random.uniform(10, 20))
         new_net = ClaimClassifier(variables=variables, multiplier=multiplier)
-        lrn_rate = np.random.uniform(0.0001, 0.1)
+        lrn_rate = np.random.uniform(0.001, 0.2)
 
         loss = T.nn.BCELoss()
         no_batches = len(data_x)
