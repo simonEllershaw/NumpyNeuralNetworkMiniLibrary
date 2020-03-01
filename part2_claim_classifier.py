@@ -225,12 +225,12 @@ def ClaimClassifierHyperParameterSearch(data_x, data_y, test_x, test_y, variable
     The function should return your optimised hyper-parameters.
     """
     max_metric = 0
-    searches = 10
+    searches = 100
 
     for i in range(searches):
-        multiplier = round(np.random.uniform(1, 15))
+        multiplier = round(np.random.uniform(10, 20))
         new_net = ClaimClassifier(variables=variables, multiplier=multiplier)
-        lrn_rate = np.random.uniform(0.0001, 0.15)
+        lrn_rate = np.random.uniform(0.0001, 0.1)
 
         loss = T.nn.BCELoss()
         no_batches = len(data_x)
