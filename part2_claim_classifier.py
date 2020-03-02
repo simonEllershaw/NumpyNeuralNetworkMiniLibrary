@@ -130,7 +130,7 @@ class ClaimClassifier(T.nn.Module):
         X_clean = self._preprocessor(X_raw)
         X = T.Tensor(X_clean)
         oupt = self(X)
-        pred_y = oupt >= 0.5
+        pred_y = oupt >= 0.5529
         pred_y = pred_y.numpy()
         prob_y = oupt.detach().numpy()
 
