@@ -93,7 +93,7 @@ class PricingModel():
         multiple_binarizers = []
         binarizer = LabelBinarizer()
 
-        headers = ['drv_sex1', 'vh_type', 'pol_coverage', 'pol_usage']
+        headers = ['drv_sex1', 'vh_type', 'pol_coverage', 'pol_usage','pol_payd']
         i = 0
         for header in headers:
             data = X_raw[header]
