@@ -71,7 +71,7 @@ class PricingModel():
         # YOUR CODE HERE
 
         # Load simple data set used in part 2
-        part2_headers = ["drv_age1", 'vh_age', 'vh_cyl', 'vh_din', 'pol_bonus', 'vh_sale_begin', 'vh_sale_end',
+        part2_headers = ['drv_age1', 'vh_age', 'vh_cyl', 'vh_din', 'pol_bonus', 'vh_sale_begin', 'vh_sale_end',
                          'vh_value', 'vh_speed','drv_age_lic1','pol_duration','pol_sit_duration','drv_age2']
         #  added from before
         # 'drv_age_lic1'
