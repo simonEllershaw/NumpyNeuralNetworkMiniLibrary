@@ -1,6 +1,6 @@
 # Neural NetWork Mini Library
 
-In this project I created a mini neural network library in python.
+This code was part of a larger machine learning group project. I was implemented this mini neural network python library.
 
 ## Example code use
 ```
