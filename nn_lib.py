@@ -702,5 +702,6 @@ def example_main():
     accuracy = (preds == targets).mean()
     print("Validation accuracy: {}".format(accuracy))
 
+
 if __name__ == "__main__":
     example_main()
